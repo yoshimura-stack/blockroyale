@@ -152,3 +152,74 @@ kbd{min-width:29px;padding:6px 8px;border-radius:7px;background:#222833;border:1
   35%{opacity:1;transform:scale(1.08)}
   100%{opacity:1;transform:scale(1)}
 }
+
+
+/* ===== V0.8 MINI BOARD FIT FIX ===== */
+
+/* Each RIVAL/BATTLE card must own its contents completely. */
+.large-mini-card{
+  overflow:hidden;
+  min-height:0;
+  box-sizing:border-box;
+}
+
+/* Keep the 10x20 board ratio, but never allow it to exceed the card height. */
+.large-mini-card .mini-board{
+  display:block;
+  width:auto !important;
+  height:100% !important;
+  max-height:100% !important;
+  max-width:138px !important;
+  aspect-ratio:1 / 2;
+  justify-self:end;
+  align-self:stretch;
+  object-fit:contain;
+  box-sizing:border-box;
+}
+
+/* The copy column must also be allowed to shrink cleanly. */
+.large-mini-card .mini-copy{
+  min-height:0;
+  overflow:hidden;
+}
+
+/* Prevent the two-card grids from expanding beyond their panel. */
+.large-stack{
+  min-height:0;
+  overflow:hidden;
+}
+
+.side-left .large-stack,
+.side-right .large-stack{
+  flex:1 1 0;
+}
+
+/* On shorter screens, reduce mini-board ceiling rather than letting it escape. */
+@media(max-height:900px) and (min-width:1001px){
+  .large-mini-card .mini-board{
+    max-width:116px !important;
+  }
+}
+
+@media(max-height:780px) and (min-width:1001px){
+  .large-mini-card .mini-board{
+    max-width:96px !important;
+  }
+  .large-mini-card{
+    padding:9px;
+    gap:10px;
+  }
+  .section-heading{
+    margin:7px 0 5px;
+  }
+}
+
+/* If the viewport becomes too tight, allow the side panel itself to scroll
+   instead of letting a canvas visually spill outside a card. */
+@media(max-height:700px) and (min-width:1001px){
+  .side-panel{
+    overflow:auto;
+    scrollbar-width:none;
+  }
+  .side-panel::-webkit-scrollbar{display:none}
+}

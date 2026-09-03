@@ -1,4 +1,4 @@
-# BLOCK ROYALE — Phase 1 Starter V0.7
+# BLOCK ROYALE — Phase 1 Starter V0.8
 
 ## 今回盛り込んだ仕様
 - 王道7テトリミノ: I / O / T / S / Z / J / L
@@ -101,3 +101,10 @@ Three.jsによる本格3Dレンダラーは、まずこの2Dロジックを安�
 - HOSTのBATTLE START後、PLAYER盤面全面に 3 → 2 → 1 → START! を大きく表示
 - START表示後にゲーム開始、約0.85秒でオーバーレイ消去
 - S / ↓ のSoft DropはV0.6仕様を維持
+
+## V0.8 Mini Board Fit Fix
+- RIVALS / BATTLE のMINI BOARDがカード枠をはみ出す問題を修正
+- 1:2比率は維持しつつ、カードの高さに自動フィット
+- 低い画面ではMINI BOARDを段階的に縮小
+- 極端に低い画面ではサイドパネル内スクロールへ退避
+- V0.7の 3 → 2 → 1 → START! と S / ↓ Soft Drop は維持
