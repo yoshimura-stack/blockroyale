@@ -22,7 +22,7 @@ onMessage(msg=>{
  if(msg.type==="ko"){const old=players.get(p.id)||p;players.set(p.id,{...old,...p,alive:false});render();}
  if(msg.type==="attack-request"){
    const target=chooseRandomTarget(p.from);
-   if(target)emit("attack-deliver",{to:target.id,toName:target.name,from:p.from,fromName:p.fromName,amount:p.amount,attackId:p.attackId});
+   if(target){emit("attack-routed",{toSender:p.from,targetId:target.id,targetName:target.name,amount:p.amount,attackId:p.attackId});emit("attack-deliver",{to:target.id,toName:target.name,from:p.from,fromName:p.fromName,amount:p.amount,attackId:p.attackId});}
  }
 });
 $("#startBtn").onclick=()=>{

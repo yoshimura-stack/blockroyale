@@ -23,15 +23,27 @@
     <main class="game-layout">
       <section class="side-panel glass">
         <div class="panel-title">NEXT</div>
-        <canvas id="nextCanvas" width="160" height="160"></canvas>
-        <div class="stat-stack">
+        <canvas id="nextCanvas" width="160" height="120"></canvas>
+        <div class="panel-title gap-sm">RIVALS</div>
+        <div class="mini-stack">
+          <article class="mini-card" id="rivalUpCard">
+            <div class="mini-head"><div><span class="mini-label">RIVAL ↑</span><strong id="rivalUpName">—</strong></div><div class="mini-meta"><b id="rivalUpRank">—</b><small id="rivalUpScore">SCORE —</small></div></div>
+            <canvas id="rivalUpBoard" class="mini-board" width="100" height="200"></canvas>
+          </article>
+          <article class="mini-card" id="rivalDownCard">
+            <div class="mini-head"><div><span class="mini-label">RIVAL ↓</span><strong id="rivalDownName">—</strong></div><div class="mini-meta"><b id="rivalDownRank">—</b><small id="rivalDownScore">SCORE —</small></div></div>
+            <canvas id="rivalDownBoard" class="mini-board" width="100" height="200"></canvas>
+          </article>
+        </div>
+        <div class="stat-stack compact-stats">
           <div><span>MAX COMBO</span><b id="maxCombo">0</b></div>
           <div><span>MAX ATTACK</span><b id="maxAttack">0</b></div>
         </div>
-        <div class="controls">
+        <div class="controls compact-controls">
           <div><kbd>A</kbd><kbd>D</kbd><span>MOVE</span></div>
           <div><kbd>←</kbd><kbd>→</kbd><span>ROTATE</span></div>
-          <div><kbd>S</kbd><kbd>↓</kbd><span>HARD DROP</span></div>
+          <div><kbd>↓</kbd><span>SOFT DROP</span></div>
+          <div><kbd>S</kbd><span>HARD DROP</span></div>
         </div>
       </section>
 
@@ -53,14 +65,21 @@
 
       <section class="side-panel glass">
         <div class="panel-title">INCOMING</div>
-        <div id="incomingBox" class="incoming-box">
-          <strong id="incomingAmount">0</strong>
-          <span>GARBAGE</span>
-          <small id="incomingTurns">SAFE</small>
+        <div id="incomingBox" class="incoming-box"><strong id="incomingAmount">0</strong><span>GARBAGE</span><small id="incomingTurns">SAFE</small></div>
+        <div class="status-row"><div><div class="panel-title gap-sm">STATUS</div><div id="statusText" class="status-pill">LOBBY</div></div><div id="comboText" class="combo-readout">—</div></div>
+        <div class="panel-title gap-sm">BATTLE</div>
+        <div class="mini-stack">
+          <article class="mini-card battle-card" id="targetCard">
+            <div class="mini-head"><div><span class="mini-label">ATTACK TARGET</span><strong id="targetName">—</strong></div><div class="mini-meta"><b id="targetRank">—</b><small id="targetScore">SCORE —</small></div></div>
+            <canvas id="targetBoard" class="mini-board" width="100" height="200"></canvas>
+            <div id="targetEvent" class="mini-event">NO TARGET</div>
+          </article>
+          <article class="mini-card battle-card" id="attackerCard">
+            <div class="mini-head"><div><span class="mini-label">ATTACKER</span><strong id="attackerName">—</strong></div><div class="mini-meta"><b id="attackerRank">—</b><small id="attackerScore">SCORE —</small></div></div>
+            <canvas id="attackerBoard" class="mini-board" width="100" height="200"></canvas>
+            <div id="attackerEvent" class="mini-event danger-text">NO ATTACKER</div>
+          </article>
         </div>
-        <div class="panel-title gap">STATUS</div>
-        <div id="statusText" class="status-pill">LOBBY</div>
-        <div id="comboText" class="combo-readout">—</div>
       </section>
     </main>
   </div>

@@ -91,6 +91,18 @@ export class Tetris {
     }
   }
   isGrounded(){ return this.current && this.collides(this.current.x,this.current.y+1,this.current.matrix); }
+  softDrop(){
+    if(!this.alive||!this.current) return false;
+    if(!this.collides(this.current.x,this.current.y+1,this.current.matrix)){
+      this.current.y++;
+      this.score += CONFIG.SOFT_DROP_SCORE_PER_CELL;
+      this.cb.onScore?.(this.score);
+      this.lockStarted=null;
+      return true;
+    }
+    if(this.lockStarted===null)this.lockStarted=performance.now();
+    return false;
+  }
   hardDrop(){
     if(!this.alive||!this.current) return;
     let d=0; while(!this.collides(this.current.x,this.current.y+1,this.current.matrix)){this.current.y++;d++;}
@@ -222,6 +234,11 @@ export class Tetris {
   ko(reason){
     if(!this.alive)return;
     this.alive=false;this.started=false;this.cb.onKO?.({reason,score:this.score});
+  }
+  snapshot(){
+    const view=this.board.map(row=>row.slice());
+    if(this.current){for(let r=0;r<this.current.matrix.length;r++)for(let c=0;c<this.current.matrix[r].length;c++){if(!this.current.matrix[r][c])continue;const x=this.current.x+c,y=this.current.y+r;if(y>=0&&y<CONFIG.BOARD_H&&x>=0&&x<CONFIG.BOARD_W&&!view[y][x])view[y][x]=this.current.type;}}
+    return view.flat().map(v=>v||".").join("");
   }
   stats(){return {score:this.score,lines:this.lines,combo:this.combo,maxCombo:this.maxCombo,maxAttack:this.maxAttack,level:this.level,incoming:this.incoming.reduce((s,p)=>s+p.amount,0)}}
 }

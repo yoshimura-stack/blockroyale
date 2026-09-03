@@ -13,6 +13,8 @@ export const CONFIG = {
   COMBO_BONUS_CAP: 4,
   SCORE_LINES: {1:100, 2:300, 3:500, 4:800},
   HARD_DROP_SCORE_PER_CELL: 2,
+  SOFT_DROP_SCORE_PER_CELL: 1,
+  SOFT_DROP_MS: 45,
   CHANNEL: "block-royale-phase1",
   // Supabase is intentionally not connected in this build.
   // Next phase: DB truth + Realtime + recovery + server-authoritative attack IDs.
