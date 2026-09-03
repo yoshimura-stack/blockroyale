@@ -1,0 +1,19 @@
+export const CONFIG = {
+  BOARD_W: 10,
+  BOARD_H: 20,
+  LEVEL_INTERVAL_MS: 60_000,
+  OPENING_ATTACK_LOCK_MS: 15_000,
+  LINE_CLEAR_DELAY_MS: 200,
+  LOCK_DELAY_MS: 500,
+  LOCK_RESET_LIMIT: 15,
+  INCOMING_TURNS: 2,
+  SPEEDS_MS: [1000, 850, 700, 570, 450, 350, 270, 200, 150, 110, 80],
+  ATTACK_BASE: {1:0, 2:1, 3:2, 4:3},
+  COMBO_BONUS: {2:1, 3:2, 4:3},
+  COMBO_BONUS_CAP: 4,
+  SCORE_LINES: {1:100, 2:300, 3:500, 4:800},
+  HARD_DROP_SCORE_PER_CELL: 2,
+  CHANNEL: "block-royale-phase1",
+  // Supabase is intentionally not connected in this build.
+  // Next phase: DB truth + Realtime + recovery + server-authoritative attack IDs.
+};

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BLOCK ROYALE — HOST</title>
+  <link rel="stylesheet" href="./css/app.css">
+</head>
+<body>
+  <main class="admin-shell">
+    <section class="admin-card glass">
+      <div class="eyebrow">HOST CONTROL</div>
+      <h1>BLOCK ROYALE</h1>
+      <div class="admin-stats">
+        <div><span>READY</span><b id="readyCount">0</b></div>
+        <div><span>ALIVE</span><b id="aliveCount">0</b></div>
+        <div><span>PHASE</span><b id="phase">LOBBY</b></div>
+      </div>
+      <div class="admin-actions">
+        <button id="startBtn" class="btn primary">BATTLE START</button>
+        <button id="nextBtn" class="btn">NEXT BATTLE</button>
+        <button id="resetBtn" class="btn danger">EMERGENCY RESET</button>
+      </div>
+      <p class="small">現在は同一ブラウザ端末内の BroadcastChannel でテスト可能。Supabase接続は次工程です。</p>
+    </section>
+    <section class="admin-card glass">
+      <div class="panel-title">PLAYERS</div>
+      <div id="players" class="player-list"></div>
+    </section>
+  </main>
+  <script type="module" src="./js/host.js"></script>
+</body>
+</html>

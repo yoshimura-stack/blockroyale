@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BLOCK ROYALE — PROJECTOR</title>
+  <link rel="stylesheet" href="./css/app.css">
+</head>
+<body class="projector-body">
+  <main class="projector-shell">
+    <header class="projector-header">
+      <div><div class="eyebrow">LIVE</div><h1>BLOCK ROYALE</h1></div>
+      <div class="alive-big"><span>ALIVE</span><b id="aliveCount">0</b></div>
+    </header>
+    <section id="hero" class="projector-hero glass">
+      <div id="phase">WAITING FOR PLAYERS</div>
+      <strong id="heroText">LOBBY</strong>
+      <small id="timerText"></small>
+    </section>
+    <section class="leaderboard glass">
+      <div class="panel-title">LIVE RANKING</div>
+      <div id="ranking"></div>
+    </section>
+  </main>
+  <script type="module" src="./js/projector.js"></script>
+</body>
+</html>

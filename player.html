@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BLOCK ROYALE — PLAYER</title>
+  <link rel="stylesheet" href="./css/app.css">
+</head>
+<body>
+  <div id="app" class="player-shell">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">BLOCK ROYALE</div>
+        <strong id="playerNameLabel">PLAYER</strong>
+      </div>
+      <div class="top-stats">
+        <div><span>LEVEL</span><b id="level">1</b></div>
+        <div><span>SCORE</span><b id="score">0</b></div>
+        <div><span>ALIVE</span><b id="alive">1</b></div>
+      </div>
+    </header>
+
+    <main class="game-layout">
+      <section class="side-panel glass">
+        <div class="panel-title">NEXT</div>
+        <canvas id="nextCanvas" width="160" height="160"></canvas>
+        <div class="stat-stack">
+          <div><span>MAX COMBO</span><b id="maxCombo">0</b></div>
+          <div><span>MAX ATTACK</span><b id="maxAttack">0</b></div>
+        </div>
+        <div class="controls">
+          <div><kbd>A</kbd><kbd>D</kbd><span>MOVE</span></div>
+          <div><kbd>←</kbd><kbd>→</kbd><span>ROTATE</span></div>
+          <div><kbd>S</kbd><kbd>↓</kbd><span>HARD DROP</span></div>
+        </div>
+      </section>
+
+      <section class="board-wrap">
+        <div id="boardFrame" class="board-frame">
+          <canvas id="board" width="400" height="800"></canvas>
+          <div id="centerFx" class="center-fx"></div>
+          <div id="overlay" class="overlay">
+            <div class="overlay-card glass">
+              <div class="eyebrow">PLAYER ENTRY</div>
+              <h2>BLOCK ROYALE</h2>
+              <input id="nameInput" maxlength="18" placeholder="名前を入力" value="">
+              <button id="joinBtn" class="btn primary">READY</button>
+              <p class="small">HOSTが開始すると全員一斉にスタートします。</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="side-panel glass">
+        <div class="panel-title">INCOMING</div>
+        <div id="incomingBox" class="incoming-box">
+          <strong id="incomingAmount">0</strong>
+          <span>GARBAGE</span>
+          <small id="incomingTurns">SAFE</small>
+        </div>
+        <div class="panel-title gap">STATUS</div>
+        <div id="statusText" class="status-pill">LOBBY</div>
+        <div id="comboText" class="combo-readout">—</div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="./js/player.js"></script>
+</body>
+</html>
