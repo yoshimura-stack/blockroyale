@@ -98,10 +98,9 @@ window.addEventListener("keydown",e=>{
  else if(e.key==="d"||e.key==="D")game.move(1);
  else if(e.key==="ArrowLeft")game.rotate(-1);
  else if(e.key==="ArrowRight")game.rotate(1);
- else if(e.key==="s"||e.key==="S")game.hardDrop();
- else if(e.key==="ArrowDown"){
+ else if(e.key==="s"||e.key==="S"||e.key==="ArrowDown"){
    softDropHeld=true;
-   // Give immediate feedback on the first key press.
+   // S / ↓ are both Soft Drop. Give immediate feedback on first press.
    if(!e.repeat)game.softDrop();
  }
  else handled=false;
@@ -109,7 +108,7 @@ window.addEventListener("keydown",e=>{
 },{passive:false});
 
 window.addEventListener("keyup",e=>{
- if(e.key==="ArrowDown"){
+ if(e.key==="ArrowDown"||e.key==="s"||e.key==="S"){
    softDropHeld=false;
    e.preventDefault();
  }

@@ -1,4 +1,4 @@
-# BLOCK ROYALE — Phase 1 Starter V0.4
+# BLOCK ROYALE — Phase 1 Starter V0.5
 
 ## 今回盛り込んだ仕様
 - 王道7テトリミノ: I / O / T / S / Z / J / L
@@ -7,7 +7,7 @@
 - A/D 左右移動
 - ←/→ 左右回転
 - ↓ Soft Drop（押している間だけ高速下降）
-- S Hard Drop（即固定）
+- S Soft Drop（↓と同じ）
 - Lock Delay 500ms / move reset上限15
 - Hard Drop即固定
 - SCORE: Single 100 / Double 300 / Triple 500 / 4-Line 800 × LEVEL + Hard Drop距離×2
@@ -79,8 +79,13 @@ Cloudflare Pages:
 Three.jsによる本格3Dレンダラーは、まずこの2Dロジックを安定させた後に差し替える設計です。
 ゲームロジックと描画を分離しているので、次工程で `render.js` をThree.js rendererへ置換できます。
 
-## V0.4 HUD
+## V0.5 HUD
 - 左RIVALS: 自分より順位が近い上位1人 / 下位1人
 - 右BATTLE: 最後に攻撃した相手 / 最後に自分を攻撃した相手
 - 名前 / 順位 / SCORE / 軽量MINI BOARD
 - snapshot 500ms（ローカル版）
+
+## V0.5 update
+- S / ↓ を両方 Soft Drop に統一
+- RIVALS / BATTLE の4枚MINI BOARDを大型化
+- 左右サイドレールを広げ、ワイド画面の余白を活用
