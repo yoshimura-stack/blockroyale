@@ -63,16 +63,42 @@ $("#joinBtn").onclick=()=>{
  $("#statusText").textContent="READY";
 };
 
+
+function showCountdown(value, go=false){
+ const overlay=$("#countdownOverlay");
+ const num=$("#countdownNumber");
+ const eyebrow=$("#countdownEyebrow");
+ const sub=$("#countdownSub");
+ overlay.classList.remove("hidden","go");
+ if(go)overlay.classList.add("go");
+ eyebrow.textContent=go?"BLOCK ROYALE":"GET READY";
+ sub.textContent=go?"BATTLE START":"BATTLE STARTS";
+ num.textContent=value;
+ num.classList.remove("pulse");
+ void num.offsetWidth;
+ num.classList.add("pulse");
+}
+function hideCountdown(){
+ $("#countdownOverlay").classList.add("hidden");
+}
+
 function startMatch(startAt){
  newGame();matchStartAt=startAt;attackUnlockAt=startAt+CONFIG.OPENING_ATTACK_LOCK_MS;currentPhase="COUNTDOWN";
+ let lastShown=null;
  const countdown=()=>{
   const d=startAt-Date.now();
-  if(d>0){fx(Math.ceil(d/1000));requestAnimationFrame(countdown);}
-  else{
+  if(d>0){
+    const n=Math.max(1,Math.ceil(d/1000));
+    if(n!==lastShown){showCountdown(String(n),false);lastShown=n;}
+    requestAnimationFrame(countdown);
+  }else{
+   showCountdown("START!",true);
    game.start();currentPhase="BATTLE";$("#statusText").textContent="OPENING";
-   fx("GO!");sendState();
+   setTimeout(()=>hideCountdown(),850);
+   sendState();
   }
- };countdown();
+ };
+ countdown();
 }
 onMessage(msg=>{
  const p=msg.payload||{};
