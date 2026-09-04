@@ -127,32 +127,36 @@ $("#nextBtn").onclick=async()=>{
 };
 $("#resetBtn").onclick=async()=>{
  finishingMatch=false;
- if(!match||!confirm("全プレイヤー・盤面・攻撃履歴を完全リセットしますか？"))return;
+ if(!match||!confirm("全プレイヤー・盤面・スコア・攻撃履歴を完全リセットしますか？"))return;
 
  const nextGeneration=(match.battle_no||1)+1;
 
- // 1) 先に世代番号を更新。PLAYERへ「完全リセット」を通知。
- const {error:matchErr}=await supabase.from("matches")
+ // STEP 1:
+ // Publish an explicit RESET phase first.
+ // PLAYER clients hard-reload immediately and therefore stop all local upserts.
+ const {error:resetSignalError}=await supabase.from("matches")
    .update({
-     phase:"LOBBY",
+     phase:"RESET",
      start_at:null,
      battle_no:nextGeneration,
      level:1
    })
    .eq("id",match.id);
 
- if(matchErr){
-   console.error("reset match",matchErr);
-   alert("RESETに失敗しました。");
+ if(resetSignalError){
+   console.error("reset signal",resetSignalError);
+   alert("RESET通知に失敗しました。");
    return;
  }
 
- match={...match,phase:"LOBBY",start_at:null,battle_no:nextGeneration,level:1};
- phase="LOBBY";
+ match={...match,phase:"RESET",start_at:null,battle_no:nextGeneration,level:1};
+ phase="RESET";
+ players.clear();
  render();
 
- // 2) RealtimeがPLAYERへ届く猶予。
- await new Promise(resolve=>setTimeout(resolve,900));
+ // STEP 2:
+ // Give Realtime/self-heal clients time to receive RESET and reload.
+ await new Promise(resolve=>setTimeout(resolve,1100));
 
  const attackDelete=await supabase.from("attacks").delete().eq("match_id",match.id);
  const stateDelete=await supabase.from("player_states").delete().eq("match_id",match.id);
@@ -164,10 +168,12 @@ $("#resetBtn").onclick=async()=>{
      states:stateDelete.error,
      players:playerDelete.error
    });
+   alert("一部のデータ削除に失敗しました。Consoleを確認してください。");
  }
 
- // 3) DBの正しい現在状態をもう一度確定。
- await supabase.from("matches")
+ // STEP 3:
+ // The authoritative clean state is LOBBY with zero players.
+ const {error:lobbyError}=await supabase.from("matches")
    .update({
      phase:"LOBBY",
      start_at:null,
@@ -176,6 +182,14 @@ $("#resetBtn").onclick=async()=>{
    })
    .eq("id",match.id);
 
+ if(lobbyError){
+   console.error("reset lobby finalization",lobbyError);
+   alert("LOBBY復帰に失敗しました。");
+   return;
+ }
+
+ match={...match,phase:"LOBBY",start_at:null,battle_no:nextGeneration,level:1};
+ phase="LOBBY";
  players.clear();
  render();
 };

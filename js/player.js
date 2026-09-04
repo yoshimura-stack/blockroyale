@@ -62,6 +62,34 @@ function clearPeerHUD(){
  renderPeerHUD();
 }
 
+let emergencyReloading=false;
+
+function forceEmergencyResetReload(){
+ if(emergencyReloading)return;
+ emergencyReloading=true;
+
+ // Stop everything immediately before reload.
+ joined=false;
+ softDropHeld=false;
+ if(game){
+   game.started=false;
+   game.alive=false;
+ }
+
+ hideCountdown();
+ hideResultOverlay();
+ $("#battleToast").classList.add("hidden");
+ $("#statusText").textContent="RESET";
+
+ // Emergency reset is intentionally a hard reset.
+ // A fresh page guarantees SCORE / LEVEL / board / NEXT / local caches are gone.
+ setTimeout(()=>{
+   const url=new URL(window.location.href);
+   url.searchParams.set("_reset",String(Date.now()));
+   window.location.replace(url.toString());
+ },120);
+}
+
 function handleEmergencyReset(nextMatch){
  joined=false;
  name="";
@@ -93,6 +121,8 @@ function handleEmergencyReset(nextMatch){
  hideCountdown();
  hideResultOverlay();
  $("#battleToast").classList.add("hidden");
+ $("#centerFx").classList.remove("show");
+ $("#centerFx").innerHTML="";
 
  if(nextMatch)match={...match,...nextMatch};
  seenBattleNo=match?.battle_no??seenBattleNo;
@@ -182,7 +212,7 @@ async function syncOwnPlayerTruth(){
  // Emergency Reset removes the PLAYER row entirely.
  // NEXT BATTLE keeps it, so this cleanly distinguishes the two operations.
  if(!data){
-   handleEmergencyReset(match);
+   forceEmergencyResetReload();
  }
 }
 
@@ -203,6 +233,11 @@ async function syncMatchTruth(){
  const generationChanged=
    seenBattleNo!==null &&
    data.battle_no!==seenBattleNo;
+
+ if(data.phase==="RESET"){
+   forceEmergencyResetReload();
+   return;
+ }
 
  if(generationChanged && data.phase==="LOBBY"){
    handleEmergencyReset(data);
@@ -354,6 +389,11 @@ async function subscribeOnline(){
     const battleChanged=seenBattleNo!==null && incoming.battle_no!==seenBattleNo;
     match={...match,...incoming};
 
+    if(match.phase==="RESET"){
+      forceEmergencyResetReload();
+      return;
+    }
+
     if(battleChanged && match.phase==="LOBBY"){
       handleEmergencyReset(incoming);
       return;
@@ -384,7 +424,7 @@ async function subscribeOnline(){
     // EMERGENCY RESET deletes this player's own row.
     // Do NOT ignore self DELETE: it is the most reliable reset signal.
     if(payload.eventType==="DELETE" && row.id===id){
-      handleEmergencyReset(match);
+      forceEmergencyResetReload();
       return;
     }
 
@@ -429,7 +469,12 @@ async function requestAttack(amount){
  const prev=peers.get(target.id)||{id:target.id,name:target.player_name,alive:true,score:0,snapshot:""};
  peers.set(target.id,{...prev,name:target.player_name});
  $("#targetEvent").textContent=`${target.player_name} へ攻撃 / 邪魔ブロック ${amount}列`;
+
+ // Make the target unmistakable in the CENTER of the board.
+ // This deliberately replaces the generic "Nライン消去 / 攻撃N列" FX.
+ fx(`⚔ 攻撃！<br><strong>${target.player_name}</strong><br><span>邪魔ブロック ${amount}列</span>`);
  showBattleToast("outgoing",target.player_name,amount);
+
  flashCard("#targetCard");
  renderPeerHUD();
 }

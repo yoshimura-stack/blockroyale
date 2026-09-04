@@ -258,3 +258,32 @@ GitHub反映前後どちらでもよいので、Supabase SQL Editorで
 
 ### 必須SQL
 Supabase SQL Editorで `supabase_v021_match_finish.sql` を1回だけRunしてください。
+
+## V0.22 Attack Target + Hard Emergency Reset
+
+### 攻撃した側
+攻撃成立後、中央盤面に必ず
+`⚔ 攻撃！ / 相手プレイヤー名 / 邪魔ブロック N列`
+を大きく表示します。
+受けた側と同様、プレイ中に相手名を見落としにくい設計です。
+
+### EMERGENCY RESET
+RESETを通常のLOBBY遷移と分離し、専用の `RESET` phase を使用します。
+
+HOST:
+1. matches.phase = RESET + battle_no更新
+2. PLAYERへRESET通知
+3. attacks / player_states / playersを削除
+4. matches.phase = LOBBY
+
+PLAYER:
+- RESET受信時にゲームを即停止
+- ブラウザを自動リロード
+- SCORE / LEVEL / BOARD / NEXT / COMBO / RESULT / RIVALS / BATTLEをブラウザローカル状態ごと破棄
+- リロード後はPLAYER ENTRY（名前入力 + READY）から再参加
+
+Realtime取りこぼし時もDB pollingと自分のplayers row削除検知で同じhard resetへ入ります。
+
+### SQL
+V0.22で追加SQLはありません。
+すでにV0.20とV0.21 SQLをRun済みなら、そのままでOKです。

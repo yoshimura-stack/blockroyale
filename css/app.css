@@ -518,3 +518,22 @@ body{overflow:hidden}
   margin-top:12px !important;
   font-size:clamp(14px,1.8vw,20px) !important;
 }
+
+/* ===== V0.22 CENTER ATTACK TARGET ===== */
+.center-fx strong{
+  display:inline-block;
+  margin:6px 0 4px;
+  font-size:1.18em;
+  color:var(--gold);
+  max-width:92%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.center-fx span{
+  display:inline-block;
+  margin-top:5px;
+  font-size:.48em;
+  letter-spacing:.03em;
+  color:#fff;
+}
