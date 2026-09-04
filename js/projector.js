@@ -8,13 +8,14 @@ function render(){
  $("#ranking").innerHTML=alive.sort((a,b)=>(b.score||0)-(a.score||0)).slice(0,10).map((p,i)=>`<div class="rank-chip"><b>#${i+1}</b> ${p.name} · ${(p.score||0).toLocaleString()}</div>`).join("");
  if(phase==="LOBBY"){$("#heroText").textContent="LOBBY";$("#timerText").textContent=`READY ${arr.filter(p=>p.ready).length}`;}
 }
-function renderResult(){
- const arr=[...players.values()];
- const winner=arr.find(p=>p.alive!==false);
+async function renderResult(){
+ const {data}=await supabase.from("players").select("id,player_name,alive,score,rank").eq("match_id",match.id);
+ const arr=data||[];
+ const winner=arr.find(p=>p.rank===1)||arr.sort((a,b)=>(b.score||0)-(a.score||0))[0]||null;
  $("#phase").textContent="RESULT";
- $("#aliveCount").textContent=winner?1:0;
- $("#heroText").textContent=winner?`👑 ${winner.name}`:"MATCH OVER";
- $("#timerText").textContent=winner?"WINNER":"NO SURVIVOR";
+ $("#aliveCount").textContent=0;
+ $("#heroText").textContent=winner?`👑 ${winner.player_name}`:"MATCH OVER";
+ $("#timerText").textContent=winner?`WINNER · SCORE ${(winner.score||0).toLocaleString()}`:"NO RESULT";
 }
 
 async function loadPlayers(){

@@ -171,3 +171,27 @@ Three.jsによる本格3Dレンダラーは、まずこの2Dロジックを安�
 - PLAYERはENTRY画面へ戻り、RIVALS / BATTLEキャッシュも消去
 - HOST / PROJECTORもDELETEイベントで参加者をローカル表示から除去
 - EMERGENCY RESET後は全員再READYが必要
+
+## V0.13 Attack Direction Toast
+- 攻撃が発生した瞬間、PLAYER盤面中央に大きな方向通知を表示
+- 自分が攻撃: `ATTACK TO / 相手名 / GARBAGE ×N`
+- 自分が攻撃を受けた: `ATTACK FROM / 相手名 / INCOMING ×N`
+- OUTGOINGはゴールド、INCOMINGは赤系で視認性を分離
+- 約1.45秒で自動消去し、プレイを止めない
+- 右側BATTLEカードのATTACK TARGET / ATTACKER表示も従来どおり維持
+
+## V0.14 Winner Splash / Result Flow
+- MATCH END時にPLAYER中央へ大きなRESULTオーバーレイを表示
+- 勝者本人: `WINNER / 名前 / SCORE / #1`
+- 敗者側: 勝者名を大きく表示し、自分の順位も表示
+- 自動で次ラウンドには進まず、HOSTが実況・結果確認後にNEXT BATTLEを押す設計
+- 全員K.O.になった場合もrank=1を決定してWINNER表示
+- K.O.時に順位をDBへ保存
+- PROJECTORもRESULTでWINNER名とSCOREを大表示
+
+## V0.15 Japanese-first Battle HUD
+- 「ランキングが近い上位プレイヤー / 下位プレイヤー」に変更
+- 「攻撃したプレイヤー / 攻撃してきたプレイヤー」に変更
+- 攻撃送信時に相手名と邪魔ブロック列数を中央表示
+- 攻撃受信時に相手名と接近中の邪魔ブロック列数を中央表示
+- 邪魔ブロックが実際にせり上がる瞬間に「攻撃してきたプレイヤー / 名前 / 邪魔ブロックN列投下」を中央表示

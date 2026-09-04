@@ -223,3 +223,143 @@ kbd{min-width:29px;padding:6px 8px;border-radius:7px;background:#222833;border:1
   }
   .side-panel::-webkit-scrollbar{display:none}
 }
+
+/* ===== V0.13 BATTLE TOAST ===== */
+.battle-toast{
+  position:absolute;
+  left:50%;
+  top:42%;
+  transform:translate(-50%,-50%);
+  z-index:30;
+  width:min(82%,360px);
+  padding:18px 22px 20px;
+  border-radius:20px;
+  text-align:center;
+  pointer-events:none;
+  background:rgba(8,11,17,.92);
+  border:1px solid rgba(255,255,255,.13);
+  box-shadow:0 24px 70px rgba(0,0,0,.55),0 0 40px rgba(240,198,106,.10);
+  backdrop-filter:blur(12px);
+}
+.battle-toast.hidden{display:none}
+.battle-toast.outgoing{
+  border-color:rgba(240,198,106,.65);
+  box-shadow:0 24px 70px rgba(0,0,0,.55),0 0 44px rgba(240,198,106,.24);
+}
+.battle-toast.incoming{
+  border-color:rgba(255,77,103,.72);
+  box-shadow:0 24px 70px rgba(0,0,0,.55),0 0 50px rgba(255,77,103,.30);
+}
+.battle-toast-label{
+  font-size:11px;
+  letter-spacing:.22em;
+  font-weight:950;
+  color:var(--gold);
+}
+.battle-toast.incoming .battle-toast-label{color:#ff7187}
+.battle-toast-main{
+  margin-top:7px;
+  font-size:clamp(28px,4vw,42px);
+  font-weight:1000;
+  line-height:1.05;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.battle-toast-sub{
+  margin-top:7px;
+  font-size:18px;
+  font-weight:900;
+  color:var(--gold);
+}
+.battle-toast.incoming .battle-toast-sub{color:#ff7187}
+.battle-toast.show{animation:battleToastPop 1.45s ease both}
+@keyframes battleToastPop{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.72)}
+  14%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}
+  28%{transform:translate(-50%,-50%) scale(1)}
+  78%{opacity:1}
+  100%{opacity:0;transform:translate(-50%,-54%) scale(.98)}
+}
+
+/* ===== V0.14 RESULT SPLASH ===== */
+.result-overlay{
+  position:absolute;
+  inset:0;
+  z-index:40;
+  display:grid;
+  place-items:center;
+  padding:18px;
+  background:
+    radial-gradient(circle at 50% 35%,rgba(240,198,106,.18),transparent 36%),
+    rgba(3,5,8,.88);
+  backdrop-filter:blur(5px);
+}
+.result-overlay.hidden{display:none}
+.result-card{
+  width:min(88%,390px);
+  padding:28px 24px 24px;
+  border-radius:24px;
+  text-align:center;
+  border:1px solid rgba(240,198,106,.48);
+  background:rgba(12,15,21,.96);
+  box-shadow:0 30px 90px rgba(0,0,0,.65),0 0 70px rgba(240,198,106,.15);
+  animation:resultPop .7s cubic-bezier(.2,.9,.25,1.1) both;
+}
+.result-kicker{
+  font-size:11px;
+  letter-spacing:.24em;
+  color:var(--gold);
+  font-weight:900;
+}
+.result-title{
+  margin-top:10px;
+  font-size:clamp(44px,7vw,76px);
+  line-height:.95;
+  font-weight:1000;
+  letter-spacing:-.05em;
+}
+.result-name{
+  margin-top:16px;
+  font-size:clamp(28px,4vw,44px);
+  font-weight:1000;
+  color:var(--gold);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.result-score{
+  margin-top:10px;
+  font-size:16px;
+  font-weight:850;
+  color:#f5f6f8;
+}
+.result-rank{
+  margin-top:8px;
+  font-size:13px;
+  color:var(--muted);
+  font-weight:800;
+}
+.result-foot{
+  margin-top:22px;
+  font-size:10px;
+  letter-spacing:.08em;
+  color:var(--muted);
+}
+.result-overlay.loser .result-card{
+  border-color:rgba(255,255,255,.15);
+  box-shadow:0 30px 90px rgba(0,0,0,.65);
+}
+.result-overlay.loser .result-title{font-size:42px}
+.result-overlay.loser .result-name{color:#fff}
+@keyframes resultPop{
+  0%{opacity:0;transform:scale(.72) translateY(16px)}
+  65%{opacity:1;transform:scale(1.04) translateY(0)}
+  100%{opacity:1;transform:scale(1)}
+}
+
+/* V0.15 Japanese-first battle HUD */
+.large-mini-card .mini-label{white-space:normal;line-height:1.35;letter-spacing:.04em;font-size:9px}
+.section-heading{letter-spacing:.06em}
+.battle-toast-label{letter-spacing:.06em;font-size:12px}
+.battle-toast-sub{font-size:17px}

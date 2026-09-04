@@ -13,6 +13,7 @@ let game;
 const peers=new Map();
 let match=null, onlineReady=false, joined=false, seenBattleNo=null;
 const processedAttackIds=new Set();
+const attackSourceById=new Map();
 let lastAttackTargetId=null,lastAttackerId=null,lastPeerRenderAt=0;
 
 function fx(text){const el=$("#centerFx");el.innerHTML=text;el.classList.remove("show");void el.offsetWidth;el.classList.add("show")}
@@ -43,7 +44,7 @@ function rankedPlayers(){
 }
 function rankOf(pid){const a=rankedPlayers(),i=a.findIndex(p=>p.id===pid);return i<0?null:i+1}
 function fillMini(pre,p,empty){$(`#${pre}Name`).textContent=p?.name||empty;$(`#${pre}Rank`).textContent=p?(p.alive===false?"K.O.":`#${rankOf(p.id)}`):"—";$(`#${pre}Score`).textContent=p?`SCORE ${(p.score||0).toLocaleString()}`:"SCORE —";drawMini(`#${pre}Board`,p?.snapshot||"")}
-function renderPeerHUD(){const a=rankedPlayers(),i=a.findIndex(p=>p.id===id);fillMini("rivalUp",i>0?a[i-1]:null,"NO UPPER RIVAL");fillMini("rivalDown",i>=0&&i<a.length-1?a[i+1]:null,"NO LOWER RIVAL");fillMini("target",lastAttackTargetId?peers.get(lastAttackTargetId):null,"NO TARGET");fillMini("attacker",lastAttackerId?peers.get(lastAttackerId):null,"NO ATTACKER")}
+function renderPeerHUD(){const a=rankedPlayers(),i=a.findIndex(p=>p.id===id);fillMini("rivalUp",i>0?a[i-1]:null,"該当なし");fillMini("rivalDown",i>=0&&i<a.length-1?a[i+1]:null,"該当なし");fillMini("target",lastAttackTargetId?peers.get(lastAttackTargetId):null,"まだ攻撃していません");fillMini("attacker",lastAttackerId?peers.get(lastAttackerId):null,"まだ攻撃を受けていません")}
 function flashCard(sel){const el=$(sel);el.classList.remove("hit");void el.offsetWidth;el.classList.add("hit")}
 
 
@@ -55,8 +56,8 @@ function clearPeerHUD(){
  lastAttackerId=null;
  lastAttackAmount=0;
  lastIncomingAmount=0;
- $("#targetEvent").textContent="NO TARGET";
- $("#attackerEvent").textContent="NO ATTACKER";
+ $("#targetEvent").textContent="まだ攻撃していません";
+ $("#attackerEvent").textContent="まだ攻撃を受けていません";
  renderPeerHUD();
 }
 
@@ -77,9 +78,62 @@ function handleEmergencyReset(nextMatch){
  $("#alive").textContent="0";
  $("#overlay").classList.remove("hidden");
  hideCountdown();
+ hideResultOverlay();
+ $("#battleToast").classList.add("hidden");
 
  if(nextMatch)match={...match,...nextMatch};
  seenBattleNo=match?.battle_no??seenBattleNo;
+}
+
+
+async function fetchFinalPlayers(){
+ if(!match)return [];
+ const {data,error}=await supabase
+   .from("players")
+   .select("id,player_name,alive,score,rank,max_combo,max_attack")
+   .eq("match_id",match.id);
+ if(error){
+   console.error("final players",error);
+   return [];
+ }
+ return data||[];
+}
+
+async function showResultOverlay(){
+ const rows=await fetchFinalPlayers();
+ if(!rows.length)return;
+
+ const sorted=[...rows].sort((a,b)=>{
+   const ar=a.rank??9999, br=b.rank??9999;
+   if(ar!==br)return ar-br;
+   return (b.score||0)-(a.score||0);
+ });
+
+ const winner=sorted.find(p=>p.rank===1)||sorted[0];
+ const me=rows.find(p=>p.id===id);
+ const overlay=$("#resultOverlay");
+
+ overlay.classList.remove("hidden","loser");
+
+ if(winner?.id===id){
+   $("#resultKicker").textContent="BLOCK ROYALE";
+   $("#resultTitle").textContent="WINNER";
+   $("#resultName").textContent=winner.player_name||name||"PLAYER";
+   $("#resultScore").textContent=`SCORE ${(winner.score||0).toLocaleString()}`;
+   $("#resultRank").textContent="👑 #1";
+ }else{
+   overlay.classList.add("loser");
+   $("#resultKicker").textContent="MATCH RESULT";
+   $("#resultTitle").textContent="WINNER";
+   $("#resultName").textContent=winner?.player_name||"PLAYER";
+   $("#resultScore").textContent=`SCORE ${(winner?.score||0).toLocaleString()}`;
+   $("#resultRank").textContent=me?.rank?`YOUR RANK #${me.rank}`:"MATCH OVER";
+ }
+}
+
+function hideResultOverlay(){
+ $("#resultOverlay").classList.add("hidden");
+ $("#resultOverlay").classList.remove("loser");
 }
 
 function handleMatchResult(){
@@ -94,8 +148,8 @@ function handleMatchResult(){
  }else{
    $("#statusText").textContent="K.O.";
  }
+ showResultOverlay();
 }
-
 async function upsertPlayerRow(){
  if(!match||!name)return;
  const payload={id,match_id:match.id,player_name:name,ready:true,alive:game?.alive!==false,score:game?.score||0,max_combo:game?.maxCombo||0,max_attack:game?.maxAttack||0};
@@ -152,6 +206,7 @@ async function subscribeOnline(){
     }
     if(match.phase==="LOBBY"&&currentPhase!=="LOBBY"){
       currentPhase="LOBBY";
+      hideResultOverlay();
       newGame();
       $("#statusText").textContent=joined?"READY":"LOBBY";
     }
@@ -187,9 +242,14 @@ async function subscribeOnline(){
     processedAttackIds.add(a.id);
     lastAttackerId=a.attacker_id;
     const attacker=peers.get(a.attacker_id);
-    $("#attackerEvent").textContent=`${attacker?.name||"PLAYER"} → YOU ×${a.amount}`;
+    const attackerName=attacker?.name||"プレイヤー";
+    attackSourceById.set(a.id,attackerName);
+    $("#attackerEvent").textContent=`${attackerName} から ${a.amount}列の攻撃`;
+    showBattleToast("incoming",attackerName,a.amount);
     flashCard("#attackerCard");
-    game.receiveAttack(a.amount,a.id);updateIncoming();renderPeerHUD();
+    game.receiveAttack(a.amount,a.id);
+    updateIncoming();
+    renderPeerHUD();
   }).subscribe();
 
  onlineReady=true;
@@ -204,7 +264,10 @@ async function requestAttack(amount){
  lastAttackTargetId=target.id;lastAttackAmount=amount;
  const prev=peers.get(target.id)||{id:target.id,name:target.player_name,alive:true,score:0,snapshot:""};
  peers.set(target.id,{...prev,name:target.player_name});
- $("#targetEvent").textContent=`YOU → ${target.player_name} ×${amount}`;flashCard("#targetCard");renderPeerHUD();
+ $("#targetEvent").textContent=`${target.player_name} に ${amount}列の攻撃`;
+ showBattleToast("outgoing",target.player_name,amount);
+ flashCard("#targetCard");
+ renderPeerHUD();
 }
 async function markKO(reason,score){
  if(!match)return;
@@ -212,6 +275,33 @@ async function markKO(reason,score){
  await upsertStateRow();
 }
 
+
+let battleToastTimer=null;
+
+function showBattleToast(kind,playerName,amount){
+ const toast=$("#battleToast"),label=$("#battleToastLabel"),main=$("#battleToastMain"),sub=$("#battleToastSub");
+ clearTimeout(battleToastTimer);
+ toast.classList.remove("hidden","show","outgoing","incoming");
+ void toast.offsetWidth;
+ if(kind==="outgoing"){
+   toast.classList.add("outgoing");
+   label.textContent="攻撃したプレイヤー";
+   main.textContent=playerName||"プレイヤー";
+   sub.textContent=`邪魔ブロック ${amount}列を送信`;
+ }else if(kind==="landing"){
+   toast.classList.add("incoming");
+   label.textContent="攻撃してきたプレイヤー";
+   main.textContent=playerName||"プレイヤー";
+   sub.textContent=`邪魔ブロック ${amount}列投下`;
+ }else{
+   toast.classList.add("incoming");
+   label.textContent="攻撃してきたプレイヤー";
+   main.textContent=playerName||"プレイヤー";
+   sub.textContent=`邪魔ブロック ${amount}列が接近中`;
+ }
+ toast.classList.add("show");
+ battleToastTimer=setTimeout(()=>{toast.classList.add("hidden");toast.classList.remove("show","outgoing","incoming");},1450);
+}
 function callbacks(){
  return {
   onNext:t=>renderer.drawNext(t),
@@ -225,16 +315,16 @@ function callbacks(){
     sendState();
   },
   onClear:({cleared,combo,attack})=>{
-    const labels={1:"SINGLE",2:"DOUBLE",3:"TRIPLE",4:"4-LINE"};
+    const labels={1:"1ライン消去",2:"2ライン消去",3:"3ライン消去",4:"4ライン消去"};
     let text=labels[cleared]||"CLEAR";
-    if(combo>=2)text+=`<br><span>${combo} COMBO</span>`;
-    if(attack>0)text+=`<br><span>ATTACK ×${attack}</span>`;
+    if(combo>=2)text+=`<br><span>${combo} コンボ</span>`;
+    if(attack>0)text+=`<br><span>攻撃 ${attack}列</span>`;
     fx(text);
-    $("#comboText").textContent=combo>=2?`🔥 ${combo} COMBO`:"—";
+    $("#comboText").textContent=combo>=2?`🔥 ${combo} コンボ`:"—";
   },
   onAttack:amount=>{
     if(Date.now()<attackUnlockAt){
-      fx("ATTACK LOCKED");
+      fx("攻撃準備中");
       return;
     }
     game.maxAttack=Math.max(game.maxAttack,amount);
@@ -242,15 +332,21 @@ function callbacks(){
   },
   onIncoming:()=>{
     updateIncoming();
-    fx("⚠ INCOMING");
+    fx("⚠ 攻撃接近");
   },
-  onDefense:({perfect})=>fx(perfect?"PERFECT DEFENSE!":"BLOCK!"),
+  onGarbageLand:({amount,attackId})=>{
+    const attackerName=attackSourceById.get(attackId)||"プレイヤー";
+    showBattleToast("landing",attackerName,amount);
+    fx(`邪魔ブロック<br><span>${amount}列 投下</span>`);
+    attackSourceById.delete(attackId);
+  },
+  onDefense:({perfect})=>fx(perfect?"完全相殺！":"相殺！"),
   onLastChance:()=>{
-    fx("LAST CHANCE<br><span>ONE MOVE</span>");
+    fx("ラストチャンス<br><span>あと1手</span>");
     $("#statusText").textContent="LAST CHANCE";
   },
   onSurvive:()=>{
-    fx("SURVIVE!");
+    fx("生存！");
     $("#statusText").textContent="BATTLE";
   },
   onKO:({reason,score})=>{
@@ -261,7 +357,7 @@ function callbacks(){
   }
  };
 }
-function newGame(){game=new Tetris(callbacks());renderer.draw(game);updateIncoming();lastAttackTargetId=null;lastAttackerId=null;$("#targetEvent").textContent="NO TARGET";$("#attackerEvent").textContent="NO ATTACKER";renderPeerHUD()}
+function newGame(){game=new Tetris(callbacks());renderer.draw(game);updateIncoming();lastAttackTargetId=null;lastAttackerId=null;$("#targetEvent").textContent="まだ攻撃していません";$("#attackerEvent").textContent="まだ攻撃を受けていません";renderPeerHUD()}
 newGame();
 
 $("#joinBtn").onclick=async()=>{

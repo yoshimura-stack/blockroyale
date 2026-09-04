@@ -216,6 +216,7 @@ export class Tetris {
       const row=Array(CONFIG.BOARD_W).fill("G"); row[packet.hole]=null;
       this.board.push(row);
     }
+    this.cb.onGarbageLand?.({amount:packet.amount,attackId:packet.attackId});
     if(overflow){
       this.lastChance=true;
       this.cb.onLastChance?.();

@@ -24,26 +24,26 @@
       <section class="side-panel glass side-left">
         <div class="left-top-grid">
           <div class="quick-stats">
-            <div class="quick-stat"><span>MAX COMBO</span><b id="maxCombo">0</b></div>
-            <div class="quick-stat"><span>MAX ATTACK</span><b id="maxAttack">0</b></div>
+            <div class="quick-stat"><span>最大コンボ</span><b id="maxCombo">0</b></div>
+            <div class="quick-stat"><span>最大攻撃</span><b id="maxAttack">0</b></div>
             <div class="controls mini-controls">
-              <div><kbd>A</kbd><kbd>D</kbd><span>MOVE</span></div>
-              <div><kbd>←</kbd><kbd>→</kbd><span>ROTATE</span></div>
-              <div><kbd>↓</kbd><span>SOFT DROP</span></div>
-              <div><kbd>S</kbd><span>SOFT DROP</span></div>
+              <div><kbd>A</kbd><kbd>D</kbd><span>左右移動</span></div>
+              <div><kbd>←</kbd><kbd>→</kbd><span>回転</span></div>
+              <div><kbd>↓</kbd><span>高速落下</span></div>
+              <div><kbd>S</kbd><span>高速落下</span></div>
             </div>
           </div>
           <div class="next-box">
-            <div class="panel-title">NEXT</div>
+            <div class="panel-title">次のミノ</div>
             <canvas id="nextCanvas" width="160" height="120"></canvas>
           </div>
         </div>
 
-        <div class="section-heading">RIVALS</div>
+        <div class="section-heading">ランキングが近いプレイヤー</div>
         <div class="mini-stack large-stack">
           <article class="mini-card large-mini-card" id="rivalUpCard">
             <div class="mini-copy">
-              <span class="mini-label">RIVAL ↑</span>
+              <span class="mini-label">ランキングが近い上位プレイヤー</span>
               <strong id="rivalUpName">—</strong>
               <div class="mini-inline-meta"><b id="rivalUpRank">—</b><small id="rivalUpScore">SCORE —</small></div>
             </div>
@@ -51,7 +51,7 @@
           </article>
           <article class="mini-card large-mini-card" id="rivalDownCard">
             <div class="mini-copy">
-              <span class="mini-label">RIVAL ↓</span>
+              <span class="mini-label">ランキングが近い下位プレイヤー</span>
               <strong id="rivalDownName">—</strong>
               <div class="mini-inline-meta"><b id="rivalDownRank">—</b><small id="rivalDownScore">SCORE —</small></div>
             </div>
@@ -64,11 +64,28 @@
         <div id="boardFrame" class="board-frame">
           <canvas id="board" width="400" height="800"></canvas>
           <div id="centerFx" class="center-fx"></div>
+          <div id="resultOverlay" class="result-overlay hidden">
+            <div class="result-card">
+              <div id="resultKicker" class="result-kicker">MATCH RESULT</div>
+              <div id="resultTitle" class="result-title">WINNER</div>
+              <div id="resultName" class="result-name">PLAYER</div>
+              <div id="resultScore" class="result-score">SCORE 0</div>
+              <div id="resultRank" class="result-rank"></div>
+              <div class="result-foot">HOSTの次のミノ 攻撃情報を待っています</div>
+            </div>
+          </div>
+
+          <div id="battleToast" class="battle-toast hidden" aria-live="polite">
+            <div id="battleToastLabel" class="battle-toast-label">ATTACK</div>
+            <div id="battleToastMain" class="battle-toast-main">PLAYER</div>
+            <div id="battleToastSub" class="battle-toast-sub">×0</div>
+          </div>
+
           <div id="countdownOverlay" class="countdown-overlay hidden">
             <div class="countdown-inner">
               <div id="countdownEyebrow" class="countdown-eyebrow">GET READY</div>
               <div id="countdownNumber" class="countdown-number">3</div>
-              <div id="countdownSub" class="countdown-sub">BATTLE STARTS</div>
+              <div id="countdownSub" class="countdown-sub">攻撃情報 STARTS</div>
             </div>
           </div>
 
@@ -85,38 +102,38 @@
       </section>
 
       <section class="side-panel glass side-right">
-        <div class="panel-title">INCOMING</div>
+        <div class="panel-title">受けている攻撃</div>
         <div id="incomingBox" class="incoming-box compact-incoming">
           <strong id="incomingAmount">0</strong>
-          <span>GARBAGE</span>
+          <span>邪魔ブロック</span>
           <small id="incomingTurns">SAFE</small>
         </div>
 
         <div class="status-row">
           <div class="status-area">
-            <div class="panel-title">STATUS</div>
+            <div class="panel-title">状態</div>
             <div id="statusText" class="status-pill">LOBBY</div>
           </div>
           <div id="comboText" class="combo-readout">—</div>
         </div>
 
-        <div class="section-heading">BATTLE</div>
+        <div class="section-heading">攻撃情報</div>
         <div class="mini-stack large-stack">
           <article class="mini-card large-mini-card battle-card" id="targetCard">
             <div class="mini-copy">
-              <span class="mini-label">ATTACK TARGET</span>
+              <span class="mini-label">攻撃したプレイヤー</span>
               <strong id="targetName">—</strong>
               <div class="mini-inline-meta"><b id="targetRank">—</b><small id="targetScore">SCORE —</small></div>
-              <div id="targetEvent" class="mini-event">NO TARGET</div>
+              <div id="targetEvent" class="mini-event">まだ攻撃していません</div>
             </div>
             <canvas id="targetBoard" class="mini-board" width="120" height="240"></canvas>
           </article>
           <article class="mini-card large-mini-card battle-card" id="attackerCard">
             <div class="mini-copy">
-              <span class="mini-label">ATTACKER</span>
+              <span class="mini-label">攻撃してきたプレイヤー</span>
               <strong id="attackerName">—</strong>
               <div class="mini-inline-meta"><b id="attackerRank">—</b><small id="attackerScore">SCORE —</small></div>
-              <div id="attackerEvent" class="mini-event danger-text">NO ATTACKER</div>
+              <div id="attackerEvent" class="mini-event danger-text">NO 攻撃してきたプレイヤー</div>
             </div>
             <canvas id="attackerBoard" class="mini-board" width="120" height="240"></canvas>
           </article>

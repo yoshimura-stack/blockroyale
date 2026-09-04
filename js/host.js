@@ -10,6 +10,15 @@ function render(){
  $("#players").innerHTML=arr.sort((a,b)=>(b.score||0)-(a.score||0)).map(p=>`<div class="player-row"><span>${p.name}</span><b>${p.alive===false?"K.O.":(p.score||0).toLocaleString()}</b></div>`).join("");
 }
 
+
+async function assignKoRank(playerId){
+ const aliveNow=[...players.values()].filter(p=>p.alive).length;
+ const rank=Math.max(1,aliveNow+1);
+ const player=players.get(playerId);
+ if(player)player.rank=rank;
+ await supabase.from("players").update({rank}).eq("id",playerId);
+}
+
 async function maybeFinishMatch(){
  if(!match||finishingMatch)return;
  if(phase!=="BATTLE")return;
@@ -22,10 +31,24 @@ async function maybeFinishMatch(){
 
  finishingMatch=true;
 
- // Winner exists when exactly one player remains alive.
- const winner=alive[0]||null;
- if(winner){
-   await supabase.from("players").update({rank:1}).eq("id",winner.id);
+ // Normal case: one survivor remains.
+ if(alive.length===1){
+   alive[0].rank=1;
+   await supabase.from("players").update({rank:1}).eq("id",alive[0].id);
+ }
+
+ // Edge case: everybody is K.O.
+ // The most recently surviving player receives rank 1 via KO rank assignment.
+ // If no rank 1 exists due to simultaneous updates, use highest SCORE as deterministic fallback.
+ if(alive.length===0){
+   let winner=arr.find(p=>p.rank===1);
+   if(!winner){
+     winner=[...arr].sort((a,b)=>(b.score||0)-(a.score||0))[0]||null;
+     if(winner){
+       winner.rank=1;
+       await supabase.from("players").update({rank:1}).eq("id",winner.id);
+     }
+   }
  }
 
  const {error}=await supabase.from("matches")
@@ -41,12 +64,11 @@ async function maybeFinishMatch(){
  phase="RESULT";
  render();
 }
-
 async function loadPlayers(){
- const {data,error}=await supabase.from("players").select("id,player_name,ready,alive,score,max_combo,max_attack").eq("match_id",match.id);
+ const {data,error}=await supabase.from("players").select("id,player_name,ready,alive,score,rank,max_combo,max_attack").eq("match_id",match.id);
  if(error){console.error(error);return;}
  players.clear();
- for(const p of data||[])players.set(p.id,{id:p.id,name:p.player_name,ready:p.ready,alive:p.alive,score:p.score||0,maxCombo:p.max_combo||0,maxAttack:p.max_attack||0});
+ for(const p of data||[])players.set(p.id,{id:p.id,name:p.player_name,ready:p.ready,alive:p.alive,score:p.score||0,rank:p.rank??null,maxCombo:p.max_combo||0,maxAttack:p.max_attack||0});
  render();
 }
 async function init(){
@@ -60,9 +82,22 @@ async function init(){
         render();
         return;
       }
-      players.set(p.id,{id:p.id,name:p.player_name,ready:p.ready,alive:p.alive,score:p.score||0,maxCombo:p.max_combo||0,maxAttack:p.max_attack||0});
+
+      const previous=players.get(p.id);
+      players.set(p.id,{
+        id:p.id,name:p.player_name,ready:p.ready,alive:p.alive,
+        score:p.score||0,rank:p.rank??previous?.rank??null,
+        maxCombo:p.max_combo||0,maxAttack:p.max_attack||0
+      });
+
+      const justKo=previous?.alive===true && p.alive===false;
       render();
-      maybeFinishMatch();
+
+      if(justKo){
+        assignKoRank(p.id).then(()=>maybeFinishMatch());
+      }else{
+        maybeFinishMatch();
+      }
     })
     .on("postgres_changes",{event:"UPDATE",schema:"public",table:"matches",filter:`id=eq.${match.id}`},payload=>{
       match={...match,...payload.new};phase=match.phase;render();
