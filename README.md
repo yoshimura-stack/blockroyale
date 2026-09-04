@@ -135,3 +135,7 @@ Three.jsによる本格3Dレンダラーは、まずこの2Dロジックを安�
 - 401認証エラーの切り分け用
 - service_role / secret key は未使用
 - HOST画面の旧BroadcastChannel注記をSUPABASE ONLINE表示へ更新
+
+## V0.9b Player Syntax Fix
+- player.js の READY ボタンを止めていた SyntaxError: Unexpected token ')' を修正
+- Supabase Legacy anon/public key 接続とGRANT前提は維持

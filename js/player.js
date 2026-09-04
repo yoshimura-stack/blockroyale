@@ -141,7 +141,7 @@ function callbacks(){
   onDefense:({perfect})=>fx(perfect?"PERFECT DEFENSE!":"BLOCK!"),
   onLastChance:()=>{fx("LAST CHANCE<br><span>ONE MOVE</span>");$("#statusText").textContent="LAST CHANCE";},
   onSurvive:()=>{fx("SURVIVE!");$("#statusText").textContent="BATTLE";},
-  onKO:({reason,score})=>{fx("K.O.");$("#statusText").textContent="K.O.";markKO(reason,score);sendState();});sendState();}
+  onKO:({reason,score})=>{fx("K.O.");$("#statusText").textContent="K.O.";markKO(reason,score);sendState();}sendState();}
  };
 }
 function newGame(){game=new Tetris(callbacks());renderer.draw(game);updateIncoming();lastAttackTargetId=null;lastAttackerId=null;$("#targetEvent").textContent="NO TARGET";$("#attackerEvent").textContent="NO ATTACKER";renderPeerHUD()}
