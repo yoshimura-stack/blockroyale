@@ -484,3 +484,37 @@ body{overflow:hidden}
   font-size:18px;
   font-weight:950;
 }
+
+/* ===== V0.21 ALL-SCREEN WINNER TAKEOVER ===== */
+.result-overlay{
+  inset:0 !important;
+  z-index:80 !important;
+  padding:10px !important;
+  background:
+    radial-gradient(circle at 50% 32%,rgba(240,198,106,.32),transparent 38%),
+    rgba(2,4,8,.94) !important;
+}
+.result-card{
+  width:94% !important;
+  min-height:72% !important;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  border-radius:28px !important;
+}
+.result-title{
+  font-size:clamp(52px,8vw,92px) !important;
+}
+.result-name{
+  margin-top:22px !important;
+  font-size:clamp(36px,6vw,68px) !important;
+}
+.result-score{
+  margin-top:16px !important;
+  font-size:clamp(18px,2.3vw,28px) !important;
+}
+.result-rank{
+  margin-top:12px !important;
+  font-size:clamp(14px,1.8vw,20px) !important;
+}

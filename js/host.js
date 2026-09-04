@@ -21,7 +21,10 @@ async function assignKoRank(playerId){
 
 async function maybeFinishMatch(){
  if(!match||finishingMatch)return;
- if(phase!=="BATTLE")return;
+ const effectiveBattle =
+   phase==="BATTLE" ||
+   (phase==="COUNTDOWN" && match.start_at && Date.parse(match.start_at)<=serverNow());
+ if(!effectiveBattle)return;
 
  const arr=[...players.values()];
  if(arr.length<2)return;

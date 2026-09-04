@@ -127,22 +127,21 @@ async function showResultOverlay(){
 
  overlay.classList.remove("hidden","loser");
 
+ // Every PLAYER screen shows the SAME winner as the main event.
+ $("#resultKicker").textContent="BLOCK ROYALE";
+ $("#resultTitle").textContent="🏆 WINNER";
+ $("#resultName").textContent=winner?.player_name||"PLAYER";
+ $("#resultScore").textContent=`SCORE ${(winner?.score||0).toLocaleString()}`;
+
  if(winner?.id===id){
-   $("#resultKicker").textContent="BLOCK ROYALE";
-   $("#resultTitle").textContent="WINNER";
-   $("#resultName").textContent=winner.player_name||name||"PLAYER";
-   $("#resultScore").textContent=`SCORE ${(winner.score||0).toLocaleString()}`;
-   $("#resultRank").textContent="👑 #1";
+   $("#resultRank").textContent="あなたが優勝！ 👑";
  }else{
    overlay.classList.add("loser");
-   $("#resultKicker").textContent="MATCH RESULT";
-   $("#resultTitle").textContent="WINNER";
-   $("#resultName").textContent=winner?.player_name||"PLAYER";
-   $("#resultScore").textContent=`SCORE ${(winner?.score||0).toLocaleString()}`;
-   $("#resultRank").textContent=me?.rank?`YOUR RANK #${me.rank}`:"MATCH OVER";
+   $("#resultRank").textContent=me?.rank
+     ? `あなたの順位 #${me.rank}`
+     : "試合終了";
  }
 }
-
 function hideResultOverlay(){
  $("#resultOverlay").classList.add("hidden");
  $("#resultOverlay").classList.remove("loser");
@@ -150,16 +149,20 @@ function hideResultOverlay(){
 
 function handleMatchResult(){
  if(!game)return;
+
  game.started=false;
  softDropHeld=false;
  currentPhase="RESULT";
 
+ // Stop all gameplay immediately on every client.
  if(game.alive){
    $("#statusText").textContent="WINNER";
-   fx("👑 WINNER");
  }else{
    $("#statusText").textContent="K.O.";
  }
+
+ hideCountdown();
+ $("#battleToast").classList.add("hidden");
  showResultOverlay();
 }
 async function syncOwnPlayerTruth(){

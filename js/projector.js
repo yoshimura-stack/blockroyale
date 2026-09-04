@@ -9,13 +9,22 @@ function render(){
  if(phase==="LOBBY"){$("#heroText").textContent="LOBBY";$("#timerText").textContent=`READY ${arr.filter(p=>p.ready).length}`;}
 }
 async function renderResult(){
- const {data}=await supabase.from("players").select("id,player_name,alive,score,rank").eq("match_id",match.id);
+ const {data}=await supabase
+   .from("players")
+   .select("id,player_name,alive,score,rank")
+   .eq("match_id",match.id);
+
  const arr=data||[];
- const winner=arr.find(p=>p.rank===1)||arr.sort((a,b)=>(b.score||0)-(a.score||0))[0]||null;
+ const winner=arr.find(p=>p.rank===1)
+   || [...arr].sort((a,b)=>(b.score||0)-(a.score||0))[0]
+   || null;
+
  $("#phase").textContent="RESULT";
- $("#aliveCount").textContent=0;
- $("#heroText").textContent=winner?`👑 ${winner.player_name}`:"MATCH OVER";
- $("#timerText").textContent=winner?`WINNER · SCORE ${(winner.score||0).toLocaleString()}`:"NO RESULT";
+ $("#aliveCount").textContent=winner?1:0;
+ $("#heroText").textContent=winner?`🏆 WINNER  ${winner.player_name}`:"試合終了";
+ $("#timerText").textContent=winner
+   ? `SCORE ${(winner.score||0).toLocaleString()}`
+   : "";
 }
 
 async function loadPlayers(){

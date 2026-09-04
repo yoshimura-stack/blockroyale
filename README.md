@@ -244,3 +244,17 @@ Three.jsによる本格3Dレンダラーは、まずこの2Dロジックを安�
 GitHub反映前後どちらでもよいので、Supabase SQL Editorで
 `supabase_v020_server_clock.sql`
 を1回だけ実行してください。
+
+## V0.21 Server-authoritative Winner
+- 最後の1人になった瞬間の試合終了をHOSTブラウザのタイマーに依存しない構成へ変更
+- Supabase DB triggerがALIVE→K.O.を監視し、順位とWINNERをサーバー側で確定
+- HOSTタブがバックグラウンドでも勝敗確定可能
+- COUNTDOWNのままでもstart_at経過後なら試合中として扱う
+- matches.phaseをDB側でRESULTへ変更
+- 全PLAYERがRESULTを受けて即操作停止
+- 全PLAYER画面の中央盤面いっぱいに同じWINNER名を表示
+- 勝者本人は「あなたが優勝！」、敗者は自分の順位も表示
+- PROJECTORもWINNER名とSCOREを表示
+
+### 必須SQL
+Supabase SQL Editorで `supabase_v021_match_finish.sql` を1回だけRunしてください。
