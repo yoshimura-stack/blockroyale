@@ -1,4 +1,4 @@
-# BLOCK ROYALE — Phase 1 Starter V0.8
+# BLOCK ROYALE — Phase 1 Starter V0.9 SUPABASE ONLINE
 
 ## 今回盛り込んだ仕様
 - 王道7テトリミノ: I / O / T / S / Z / J / L
@@ -108,3 +108,24 @@ Three.jsによる本格3Dレンダラーは、まずこの2Dロジックを安�
 - 低い画面ではMINI BOARDを段階的に縮小
 - 極端に低い画面ではサイドパネル内スクロールへ退避
 - V0.7の 3 → 2 → 1 → START! と S / ↓ Soft Drop は維持
+
+## V0.9 Supabase Online
+- BLOCK ROYALE専用Supabase projectへ接続
+- ROOM: BLOCK-001
+- HOST / PLAYER / PROJECTOR を別PC・別ブラウザで同期
+- 500msごとに軽量盤面snapshotをDBへupsert
+- RealtimeでPLAYER / SCORE / BOARD / ATTACK / MATCH状態を反映
+- Publishable keyのみフロントに使用
+- service_role / secret key / DB password は未使用
+
+### Online Smoke Test
+1. GitHubへV0.9を上書き
+2. Cloudflareデプロイ完了
+3. PC AでHOST
+4. PLAYER Aを開いてREADY
+5. 別PC/別ブラウザでPLAYER Bを開いてREADY
+6. HOSTに2人出る
+7. BATTLE START
+8. 両PLAYERで3→2→1→START!
+9. RIVALS MINI BOARDが相互更新
+10. 2LINE以上消して相手INCOMING確認

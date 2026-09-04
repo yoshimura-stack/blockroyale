@@ -15,7 +15,8 @@ export const CONFIG = {
   HARD_DROP_SCORE_PER_CELL: 2,
   SOFT_DROP_SCORE_PER_CELL: 1,
   SOFT_DROP_MS: 45,
-  CHANNEL: "block-royale-phase1",
-  // Supabase is intentionally not connected in this build.
-  // Next phase: DB truth + Realtime + recovery + server-authoritative attack IDs.
+  ROOM_CODE: "BLOCK-001",
+  SNAPSHOT_INTERVAL_MS: 500,
+  SUPABASE_URL: "https://etwqiaqrzfyzvxdmbxep.supabase.co",
+  SUPABASE_PUBLISHABLE_KEY: "sb_publishable_VQTE-h9iyGG_Xr0EjoS4Nw_0ApUhJHp"
 };

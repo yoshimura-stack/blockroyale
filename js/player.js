@@ -1,16 +1,18 @@
 import {CONFIG} from "./config.js";
 import {Tetris} from "./tetris.js";
 import {Renderer} from "./render.js";
-import {emit,onMessage} from "./bus.js";
+import {supabase,getRoom,compactBoardToJson,jsonBoardToCompact} from "./supabase.js";
 
 const $=s=>document.querySelector(s);
 const board=$("#board"), next=$("#nextCanvas");
 const renderer=new Renderer(board,next);
-const id=crypto.randomUUID();
+const id=sessionStorage.getItem("br-player-id")||crypto.randomUUID();sessionStorage.setItem("br-player-id",id);
 let name="", matchStartAt=0, attackUnlockAt=0, currentPhase="LOBBY", placement=0;
 let softDropHeld=false, lastSoftDropAt=0;
 let game;
 const peers=new Map();
+let match=null, onlineReady=false;
+const processedAttackIds=new Set();
 let lastAttackTargetId=null,lastAttackerId=null,lastPeerRenderAt=0;
 
 function fx(text){const el=$("#centerFx");el.innerHTML=text;el.classList.remove("show");void el.offsetWidth;el.classList.add("show")}
@@ -29,6 +31,99 @@ function fillMini(pre,p,empty){$(`#${pre}Name`).textContent=p?.name||empty;$(`#$
 function renderPeerHUD(){const a=rankedAlive(),i=a.findIndex(p=>p.id===id);fillMini("rivalUp",i>0?a[i-1]:null,"NO UPPER RIVAL");fillMini("rivalDown",i>=0&&i<a.length-1?a[i+1]:null,"NO LOWER RIVAL");fillMini("target",lastAttackTargetId?peers.get(lastAttackTargetId):null,"NO TARGET");fillMini("attacker",lastAttackerId?peers.get(lastAttackerId):null,"NO ATTACKER")}
 function flashCard(sel){const el=$(sel);el.classList.remove("hit");void el.offsetWidth;el.classList.add("hit")}
 
+
+async function upsertPlayerRow(){
+ if(!match||!name)return;
+ const payload={id,match_id:match.id,player_name:name,ready:true,alive:game?.alive!==false,score:game?.score||0,max_combo:game?.maxCombo||0,max_attack:game?.maxAttack||0};
+ const {error}=await supabase.from("players").upsert(payload,{onConflict:"id"});
+ if(error)console.error("players upsert",error);
+}
+async function upsertStateRow(){
+ if(!match||!name||!game)return;
+ const payload={player_id:id,match_id:match.id,board:compactBoardToJson(game.snapshot()),next_piece:game.queue?.[0]||null,score:game.score||0,level:game.level||1,combo:game.combo||0,incoming_garbage:game.incoming.reduce((s,p)=>s+p.amount,0)};
+ const {error}=await supabase.from("player_states").upsert(payload,{onConflict:"player_id"});
+ if(error)console.error("state upsert",error);
+}
+async function loadPeers(){
+ if(!match)return;
+ const {data,error}=await supabase.from("players").select("id,player_name,alive,score,max_combo,max_attack,player_states(board,level,combo,incoming_garbage)").eq("match_id",match.id);
+ if(error){console.error("loadPeers",error);return;}
+ peers.clear();
+ for(const row of data||[]){
+   if(row.id===id)continue;
+   const st=Array.isArray(row.player_states)?row.player_states[0]:row.player_states;
+   peers.set(row.id,{id:row.id,name:row.player_name,alive:row.alive,score:row.score||0,maxCombo:row.max_combo||0,maxAttack:row.max_attack||0,snapshot:jsonBoardToCompact(st?.board)});
+ }
+ renderPeerHUD();
+}
+async function refreshAliveCount(){
+ if(!match)return;
+ const {count,error}=await supabase.from("players").select("id",{count:"exact",head:true}).eq("match_id",match.id).eq("alive",true);
+ if(!error)$("#alive").textContent=count??0;
+}
+async function subscribeOnline(){
+ match=await getRoom();
+ await upsertPlayerRow(); await upsertStateRow(); await loadPeers(); await refreshAliveCount();
+
+ supabase.channel(`match-${match.id}`)
+  .on("postgres_changes",{event:"UPDATE",schema:"public",table:"matches",filter:`id=eq.${match.id}`},payload=>{
+    match={...match,...payload.new};
+    if(match.phase==="COUNTDOWN"&&match.start_at){
+      const startAt=Date.parse(match.start_at);
+      if(currentPhase!=="COUNTDOWN"&&!game.started)startMatch(startAt);
+    }
+    if(match.phase==="LOBBY"&&currentPhase!=="LOBBY"){
+      currentPhase="LOBBY";newGame();$("#statusText").textContent="READY";
+    }
+  }).subscribe();
+
+ supabase.channel(`players-${match.id}`)
+  .on("postgres_changes",{event:"*",schema:"public",table:"players",filter:`match_id=eq.${match.id}`},async payload=>{
+    const row=payload.new||payload.old;if(!row||row.id===id)return;
+    const prev=peers.get(row.id)||{};
+    peers.set(row.id,{...prev,id:row.id,name:row.player_name??prev.name,alive:row.alive??prev.alive,score:row.score??prev.score,maxCombo:row.max_combo??prev.maxCombo,maxAttack:row.max_attack??prev.maxAttack});
+    renderPeerHUD(); await refreshAliveCount();
+  }).subscribe();
+
+ supabase.channel(`states-${match.id}`)
+  .on("postgres_changes",{event:"*",schema:"public",table:"player_states",filter:`match_id=eq.${match.id}`},payload=>{
+    const row=payload.new;if(!row||row.player_id===id)return;
+    const prev=peers.get(row.player_id)||{id:row.player_id,name:"PLAYER"};
+    peers.set(row.player_id,{...prev,snapshot:jsonBoardToCompact(row.board),score:row.score??prev.score});
+    renderPeerHUD();
+  }).subscribe();
+
+ supabase.channel(`attacks-${id}`)
+  .on("postgres_changes",{event:"INSERT",schema:"public",table:"attacks",filter:`target_id=eq.${id}`},payload=>{
+    const a=payload.new;if(!a||processedAttackIds.has(a.id)||!game.alive)return;
+    processedAttackIds.add(a.id);
+    lastAttackerId=a.attacker_id;
+    const attacker=peers.get(a.attacker_id);
+    $("#attackerEvent").textContent=`${attacker?.name||"PLAYER"} → YOU ×${a.amount}`;
+    flashCard("#attackerCard");
+    game.receiveAttack(a.amount,a.id);updateIncoming();renderPeerHUD();
+  }).subscribe();
+
+ onlineReady=true;
+}
+async function requestAttack(amount){
+ if(!match||amount<=0)return;
+ const {data:alive,error}=await supabase.from("players").select("id,player_name").eq("match_id",match.id).eq("alive",true).neq("id",id);
+ if(error||!alive?.length)return;
+ const target=alive[Math.floor(Math.random()*alive.length)];
+ const {error:insertErr}=await supabase.from("attacks").insert({match_id:match.id,attacker_id:id,target_id:target.id,amount,turns_remaining:2,status:"PENDING"});
+ if(insertErr){console.error("attack insert",insertErr);return;}
+ lastAttackTargetId=target.id;lastAttackAmount=amount;
+ const prev=peers.get(target.id)||{id:target.id,name:target.player_name,alive:true,score:0,snapshot:""};
+ peers.set(target.id,{...prev,name:target.player_name});
+ $("#targetEvent").textContent=`YOU → ${target.player_name} ×${amount}`;flashCard("#targetCard");renderPeerHUD();
+}
+async function markKO(reason,score){
+ if(!match)return;
+ await supabase.from("players").update({alive:false,score,max_combo:game.maxCombo,max_attack:game.maxAttack}).eq("id",id);
+ await upsertStateRow();
+}
+
 function callbacks(){
  return {
   onNext:t=>renderer.drawNext(t),
@@ -41,26 +136,26 @@ function callbacks(){
     if(attack>0)text+=`<br><span>ATTACK ×${attack}</span>`;
     fx(text); $("#comboText").textContent=combo>=2?`🔥 ${combo} COMBO`:"—";
   },
-  onAttack:amount=>{
-    if(Date.now()<attackUnlockAt){fx("ATTACK LOCKED");return;}
-    game.maxAttack=Math.max(game.maxAttack,amount);
-    emit("attack-request",{from:id,fromName:name,amount,attackId:crypto.randomUUID()});
-  },
+  onAttack:amount=>{ if(Date.now()<attackUnlockAt){fx("ATTACK LOCKED");return;} game.maxAttack=Math.max(game.maxAttack,amount); requestAttack(amount); },
   onIncoming:()=>{updateIncoming();fx("⚠ INCOMING");},
   onDefense:({perfect})=>fx(perfect?"PERFECT DEFENSE!":"BLOCK!"),
   onLastChance:()=>{fx("LAST CHANCE<br><span>ONE MOVE</span>");$("#statusText").textContent="LAST CHANCE";},
   onSurvive:()=>{fx("SURVIVE!");$("#statusText").textContent="BATTLE";},
-  onKO:({reason,score})=>{fx("K.O.");$("#statusText").textContent="K.O.";emit("ko",{id,name,score,reason,at:Date.now()});sendState();}
+  onKO:({reason,score})=>{fx("K.O.");$("#statusText").textContent="K.O.";markKO(reason,score);sendState();});sendState();}
  };
 }
 function newGame(){game=new Tetris(callbacks());renderer.draw(game);updateIncoming();lastAttackTargetId=null;lastAttackerId=null;$("#targetEvent").textContent="NO TARGET";$("#attackerEvent").textContent="NO ATTACKER";renderPeerHUD()}
 newGame();
 
-$("#joinBtn").onclick=()=>{
+$("#joinBtn").onclick=async()=>{
  name=$("#nameInput").value.trim()||`PLAYER-${id.slice(0,4).toUpperCase()}`;
- $("#playerNameLabel").textContent=name;$("#overlay").classList.add("hidden");
- emit("join",{id,name,ready:true,score:0,alive:true});
- $("#statusText").textContent="READY";
+ $("#playerNameLabel").textContent=name;$("#overlay").classList.add("hidden");$("#statusText").textContent="READY";
+ try{
+   if(!onlineReady)await subscribeOnline();
+   else{await upsertPlayerRow();await upsertStateRow();}
+ }catch(err){
+   console.error(err);alert("Supabase接続に失敗しました。");
+ }
 };
 
 
@@ -100,22 +195,11 @@ function startMatch(startAt){
  };
  countdown();
 }
-onMessage(msg=>{
- const p=msg.payload||{};
- if(msg.type==="match-start")startMatch(p.startAt);
- if(msg.type==="reset"){location.reload();}
- if(msg.type==="next-battle"){newGame();currentPhase="LOBBY";$("#statusText").textContent="READY";emit("join",{id,name,ready:true,score:0,alive:true});}
- if(msg.type==="player-state" && p.id!==id){peers.set(p.id,{...peers.get(p.id),...p});renderPeerHUD();}
- if(msg.type==="join" && p.id!==id){peers.set(p.id,{...peers.get(p.id),...p});renderPeerHUD();}
- if(msg.type==="ko" && p.id!==id){peers.set(p.id,{...peers.get(p.id),...p,alive:false});renderPeerHUD();}
- if(msg.type==="attack-routed" && p.toSender===id){lastAttackTargetId=p.targetId;$("#targetEvent").textContent=`YOU → ${p.targetName} ×${p.amount}`;flashCard("#targetCard");renderPeerHUD();}
- if(msg.type==="attack-deliver" && p.to===id && game.alive){lastAttackerId=p.from;$("#attackerEvent").textContent=`${p.fromName} → YOU ×${p.amount}`;flashCard("#attackerCard");game.receiveAttack(p.amount,p.attackId);updateIncoming();renderPeerHUD();}
- if(msg.type==="alive-count")$("#alive").textContent=p.count;
-});
+// Supabase Realtime handles online events.
 
 function sendState(){
- if(!name||!game)return;
- emit("player-state",{id,name,alive:game.alive,score:game.score,level:game.level,maxCombo:game.maxCombo,maxAttack:game.maxAttack,snapshot:game.snapshot()});
+ if(!name||!game||!match)return;
+ upsertPlayerRow();upsertStateRow();
 }
 window.addEventListener("keydown",e=>{
  if(!game.started||!game.alive)return;
@@ -162,4 +246,4 @@ function loop(now){
  requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
-setInterval(sendState,500);
+setInterval(sendState,CONFIG.SNAPSHOT_INTERVAL_MS);

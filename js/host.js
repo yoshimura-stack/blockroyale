@@ -1,7 +1,6 @@
-import {emit,onMessage} from "./bus.js";
+import {supabase,getRoom} from "./supabase.js";
 const $=s=>document.querySelector(s);
-const players=new Map();
-let phase="LOBBY";
+const players=new Map();let match=null,phase="LOBBY";
 
 function render(){
  const arr=[...players.values()];
@@ -9,29 +8,47 @@ function render(){
  $("#aliveCount").textContent=arr.filter(p=>p.alive).length;
  $("#phase").textContent=phase;
  $("#players").innerHTML=arr.sort((a,b)=>(b.score||0)-(a.score||0)).map(p=>`<div class="player-row"><span>${p.name}</span><b>${p.alive===false?"K.O.":(p.score||0).toLocaleString()}</b></div>`).join("");
- emit("alive-count",{count:arr.filter(p=>p.alive).length});
 }
-function chooseRandomTarget(from){
- const alive=[...players.values()].filter(p=>p.alive && p.id!==from);
- return alive.length?alive[Math.floor(Math.random()*alive.length)]:null;
+async function loadPlayers(){
+ const {data,error}=await supabase.from("players").select("id,player_name,ready,alive,score,max_combo,max_attack").eq("match_id",match.id);
+ if(error){console.error(error);return;}
+ players.clear();
+ for(const p of data||[])players.set(p.id,{id:p.id,name:p.player_name,ready:p.ready,alive:p.alive,score:p.score||0,maxCombo:p.max_combo||0,maxAttack:p.max_attack||0});
+ render();
 }
-onMessage(msg=>{
- const p=msg.payload||{};
- if(msg.type==="join"){players.set(p.id,{...players.get(p.id),...p});render();}
- if(msg.type==="player-state"){players.set(p.id,{...players.get(p.id),...p,ready:true});render();}
- if(msg.type==="ko"){const old=players.get(p.id)||p;players.set(p.id,{...old,...p,alive:false});render();}
- if(msg.type==="attack-request"){
-   const target=chooseRandomTarget(p.from);
-   if(target){emit("attack-routed",{toSender:p.from,targetId:target.id,targetName:target.name,amount:p.amount,attackId:p.attackId});emit("attack-deliver",{to:target.id,toName:target.name,from:p.from,fromName:p.fromName,amount:p.amount,attackId:p.attackId});}
- }
-});
-$("#startBtn").onclick=()=>{
- if(!players.size)return alert("READYプレイヤーがまだいません。");
- phase="COUNTDOWN";render();
- const startAt=Date.now()+4000;
- for(const [id,p] of players)players.set(id,{...p,alive:true,score:0});
- emit("match-start",{startAt});setTimeout(()=>{phase="BATTLE";render()},4000);
+async function init(){
+ try{
+   match=await getRoom();phase=match.phase;await loadPlayers();
+   supabase.channel(`host-${match.id}`)
+    .on("postgres_changes",{event:"*",schema:"public",table:"players",filter:`match_id=eq.${match.id}`},payload=>{
+      const p=payload.new||payload.old;if(!p)return;
+      players.set(p.id,{id:p.id,name:p.player_name,ready:p.ready,alive:p.alive,score:p.score||0,maxCombo:p.max_combo||0,maxAttack:p.max_attack||0});render();
+    })
+    .on("postgres_changes",{event:"UPDATE",schema:"public",table:"matches",filter:`id=eq.${match.id}`},payload=>{
+      match={...match,...payload.new};phase=match.phase;render();
+    }).subscribe();
+ }catch(err){console.error(err);alert("Supabase接続に失敗しました。");}
+}
+$("#startBtn").onclick=async()=>{
+ if(!match)return;
+ if(![...players.values()].some(p=>p.ready))return alert("READYプレイヤーがまだいません。");
+ const startAt=new Date(Date.now()+4000).toISOString();
+ await supabase.from("players").update({alive:true,score:0,rank:null,max_combo:0,max_attack:0}).eq("match_id",match.id);
+ await supabase.from("matches").update({phase:"COUNTDOWN",start_at:startAt,level:1}).eq("id",match.id);
+ setTimeout(()=>supabase.from("matches").update({phase:"BATTLE"}).eq("id",match.id),4000);
 };
-$("#nextBtn").onclick=()=>{phase="LOBBY";for(const [id,p] of players)players.set(id,{...p,alive:true,score:0});emit("next-battle",{});render();};
-$("#resetBtn").onclick=()=>{if(confirm("全画面をリセットしますか？")){players.clear();phase="LOBBY";emit("reset",{});render();}};
-render();
+$("#nextBtn").onclick=async()=>{
+ if(!match)return;
+ await supabase.from("players").update({ready:true,alive:true,score:0,rank:null,max_combo:0,max_attack:0}).eq("match_id",match.id);
+ await supabase.from("attacks").delete().eq("match_id",match.id);
+ await supabase.from("matches").update({phase:"LOBBY",start_at:null,battle_no:(match.battle_no||1)+1,level:1}).eq("id",match.id);
+};
+$("#resetBtn").onclick=async()=>{
+ if(!match||!confirm("BLOCK-001のテストデータをリセットしますか？"))return;
+ await supabase.from("attacks").delete().eq("match_id",match.id);
+ await supabase.from("player_states").delete().eq("match_id",match.id);
+ await supabase.from("players").delete().eq("match_id",match.id);
+ await supabase.from("matches").update({phase:"LOBBY",start_at:null,battle_no:1,level:1}).eq("id",match.id);
+ players.clear();phase="LOBBY";render();
+};
+render();init();
