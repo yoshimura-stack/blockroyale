@@ -55,7 +55,14 @@ async function init(){
    supabase.channel(`host-${match.id}`)
     .on("postgres_changes",{event:"*",schema:"public",table:"players",filter:`match_id=eq.${match.id}`},payload=>{
       const p=payload.new||payload.old;if(!p)return;
-      players.set(p.id,{id:p.id,name:p.player_name,ready:p.ready,alive:p.alive,score:p.score||0,maxCombo:p.max_combo||0,maxAttack:p.max_attack||0});render();maybeFinishMatch();
+      if(payload.eventType==="DELETE"){
+        players.delete(p.id);
+        render();
+        return;
+      }
+      players.set(p.id,{id:p.id,name:p.player_name,ready:p.ready,alive:p.alive,score:p.score||0,maxCombo:p.max_combo||0,maxAttack:p.max_attack||0});
+      render();
+      maybeFinishMatch();
     })
     .on("postgres_changes",{event:"UPDATE",schema:"public",table:"matches",filter:`id=eq.${match.id}`},payload=>{
       match={...match,...payload.new};phase=match.phase;render();
@@ -80,11 +87,30 @@ $("#nextBtn").onclick=async()=>{
 };
 $("#resetBtn").onclick=async()=>{
  finishingMatch=false;
- if(!match||!confirm("BLOCK-001のテストデータをリセットしますか？"))return;
+ if(!match||!confirm("BLOCK-001の全テスト参加者・盤面・攻撃履歴をリセットしますか？"))return;
+
+ const nextGeneration=(match.battle_no||1)+1;
+
+ const {error:matchErr}=await supabase.from("matches")
+   .update({phase:"LOBBY",start_at:null,battle_no:nextGeneration,level:1})
+   .eq("id",match.id);
+
+ if(matchErr){
+   console.error("reset match",matchErr);
+   alert("RESETに失敗しました。");
+   return;
+ }
+
+ match={...match,phase:"LOBBY",start_at:null,battle_no:nextGeneration,level:1};
+ phase="LOBBY";
+
+ await new Promise(resolve=>setTimeout(resolve,700));
+
  await supabase.from("attacks").delete().eq("match_id",match.id);
  await supabase.from("player_states").delete().eq("match_id",match.id);
  await supabase.from("players").delete().eq("match_id",match.id);
- await supabase.from("matches").update({phase:"LOBBY",start_at:null,battle_no:1,level:1}).eq("id",match.id);
- players.clear();phase="LOBBY";render();
+
+ players.clear();
+ render();
 };
 render();init();

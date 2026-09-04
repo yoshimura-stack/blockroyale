@@ -162,3 +162,12 @@ Three.jsによる本格3Dレンダラーは、まずこの2Dロジックを安�
 - 1位でも直下のRIVAL ↓は必ず表示可能
 - K.O.後も直近順位のライバル盤面を表示できる
 - BATTLEのATTACK TARGET / ATTACKER仕様は変更なし
+
+## V0.12 Emergency Reset Hard Fix
+- RESET後に過去プレイが復活する原因を修正
+- 原因は、削除直後に開いているPLAYERが500ms周期upsertで自分と盤面を再作成していたため
+- RESET時にbattle_noを先に更新し、PLAYER側のjoinedをfalseにして自動upsert停止
+- その後attacks / player_states / playersを削除
+- PLAYERはENTRY画面へ戻り、RIVALS / BATTLEキャッシュも消去
+- HOST / PROJECTORもDELETEイベントで参加者をローカル表示から除去
+- EMERGENCY RESET後は全員再READYが必要

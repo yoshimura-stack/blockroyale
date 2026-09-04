@@ -25,7 +25,14 @@ async function init(){
  match=await getRoom();phase=match.phase;if(match.start_at){startAt=Date.parse(match.start_at);attackUnlockAt=startAt+CONFIG.OPENING_ATTACK_LOCK_MS;}await loadPlayers();
  supabase.channel(`projector-${match.id}`)
   .on("postgres_changes",{event:"*",schema:"public",table:"players",filter:`match_id=eq.${match.id}`},payload=>{
-    const p=payload.new||payload.old;if(!p)return;players.set(p.id,{id:p.id,name:p.player_name,ready:p.ready,alive:p.alive,score:p.score||0});render();
+    const p=payload.new||payload.old;if(!p)return;
+    if(payload.eventType==="DELETE"){
+      players.delete(p.id);
+      render();
+      return;
+    }
+    players.set(p.id,{id:p.id,name:p.player_name,ready:p.ready,alive:p.alive,score:p.score||0});
+    render();
   })
   .on("postgres_changes",{event:"UPDATE",schema:"public",table:"matches",filter:`id=eq.${match.id}`},payload=>{
     match={...match,...payload.new};phase=match.phase;if(match.start_at){startAt=Date.parse(match.start_at);attackUnlockAt=startAt+CONFIG.OPENING_ATTACK_LOCK_MS;}if(phase==="RESULT")renderResult();else render();

@@ -11,7 +11,7 @@ let name="", matchStartAt=0, attackUnlockAt=0, currentPhase="LOBBY", placement=0
 let softDropHeld=false, lastSoftDropAt=0;
 let game;
 const peers=new Map();
-let match=null, onlineReady=false;
+let match=null, onlineReady=false, joined=false, seenBattleNo=null;
 const processedAttackIds=new Set();
 let lastAttackTargetId=null,lastAttackerId=null,lastPeerRenderAt=0;
 
@@ -47,6 +47,40 @@ function renderPeerHUD(){const a=rankedPlayers(),i=a.findIndex(p=>p.id===id);fil
 function flashCard(sel){const el=$(sel);el.classList.remove("hit");void el.offsetWidth;el.classList.add("hit")}
 
 
+
+
+function clearPeerHUD(){
+ peers.clear();
+ lastAttackTargetId=null;
+ lastAttackerId=null;
+ lastAttackAmount=0;
+ lastIncomingAmount=0;
+ $("#targetEvent").textContent="NO TARGET";
+ $("#attackerEvent").textContent="NO ATTACKER";
+ renderPeerHUD();
+}
+
+function handleEmergencyReset(nextMatch){
+ joined=false;
+ name="";
+ currentPhase="LOBBY";
+ softDropHeld=false;
+ processedAttackIds.clear();
+ clearPeerHUD();
+ newGame();
+
+ $("#playerNameLabel").textContent="PLAYER";
+ $("#nameInput").value="";
+ $("#statusText").textContent="LOBBY";
+ $("#score").textContent="0";
+ $("#level").textContent="1";
+ $("#alive").textContent="0";
+ $("#overlay").classList.remove("hidden");
+ hideCountdown();
+
+ if(nextMatch)match={...match,...nextMatch};
+ seenBattleNo=match?.battle_no??seenBattleNo;
+}
 
 function handleMatchResult(){
  if(!game)return;
@@ -93,26 +127,47 @@ async function refreshAliveCount(){
 }
 async function subscribeOnline(){
  match=await getRoom();
+ seenBattleNo=match.battle_no;
  await upsertPlayerRow(); await upsertStateRow(); await loadPeers(); await refreshAliveCount();
 
  supabase.channel(`match-${match.id}`)
   .on("postgres_changes",{event:"UPDATE",schema:"public",table:"matches",filter:`id=eq.${match.id}`},payload=>{
-    match={...match,...payload.new};
+    const incoming=payload.new;
+    const battleChanged=seenBattleNo!==null && incoming.battle_no!==seenBattleNo;
+    match={...match,...incoming};
+
+    if(battleChanged && match.phase==="LOBBY"){
+      handleEmergencyReset(incoming);
+      return;
+    }
+
+    seenBattleNo=match.battle_no;
+
     if(match.phase==="COUNTDOWN"&&match.start_at){
       const startAt=Date.parse(match.start_at);
-      if(currentPhase!=="COUNTDOWN"&&!game.started)startMatch(startAt);
+      if(joined&&currentPhase!=="COUNTDOWN"&&!game.started)startMatch(startAt);
     }
     if(match.phase==="RESULT"&&currentPhase!=="RESULT"){
       handleMatchResult();
     }
     if(match.phase==="LOBBY"&&currentPhase!=="LOBBY"){
-      currentPhase="LOBBY";newGame();$("#statusText").textContent="READY";
+      currentPhase="LOBBY";
+      newGame();
+      $("#statusText").textContent=joined?"READY":"LOBBY";
     }
   }).subscribe();
 
  supabase.channel(`players-${match.id}`)
   .on("postgres_changes",{event:"*",schema:"public",table:"players",filter:`match_id=eq.${match.id}`},async payload=>{
     const row=payload.new||payload.old;if(!row||row.id===id)return;
+    if(payload.eventType==="DELETE"){
+      peers.delete(row.id);
+      if(lastAttackTargetId===row.id)lastAttackTargetId=null;
+      if(lastAttackerId===row.id)lastAttackerId=null;
+      renderPeerHUD();
+      await refreshAliveCount();
+      return;
+    }
     const prev=peers.get(row.id)||{};
     peers.set(row.id,{...prev,id:row.id,name:row.player_name??prev.name,alive:row.alive??prev.alive,score:row.score??prev.score,maxCombo:row.max_combo??prev.maxCombo,maxAttack:row.max_attack??prev.maxAttack});
     renderPeerHUD(); await refreshAliveCount();
@@ -221,6 +276,8 @@ $("#joinBtn").onclick=async()=>{
      await upsertPlayerRow();
      await upsertStateRow();
    }
+   joined=true;
+   seenBattleNo=match?.battle_no??seenBattleNo;
    $("#overlay").classList.add("hidden");
    $("#statusText").textContent="READY";
  }catch(err){
@@ -268,8 +325,9 @@ function startMatch(startAt){
 // Supabase Realtime handles online events.
 
 function sendState(){
- if(!name||!game||!match)return;
- upsertPlayerRow();upsertStateRow();
+ if(!joined||!name||!game||!match)return;
+ upsertPlayerRow();
+ upsertStateRow();
 }
 window.addEventListener("keydown",e=>{
  if(!game.started||!game.alive)return;
