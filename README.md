@@ -1,3 +1,12 @@
+# BLOCK ROYALE Phase 1 v0.24 — LEADER HUD + CENTER ATTACK NOTICE
+
+## v0.24 changes
+- Right-top incoming attack pool removed; center-board attack notices are the primary warning UI.
+- Right-top now shows current #1 player, score, and your score gap.
+- Outgoing center notice shows the target player name and garbage rows.
+- Incoming center notice shows attacker name and turn countdown (2 → 1 → drop).
+- Keeps v0.23 emergency-reset / server-winner / server-clock fixes.
+
 # BLOCK ROYALE — Phase 1 Starter V0.9 SUPABASE ONLINE
 
 ## 今回盛り込んだ仕様
@@ -287,3 +296,27 @@ Realtime取りこぼし時もDB pollingと自分のplayers row削除検知で同
 ### SQL
 V0.22で追加SQLはありません。
 すでにV0.20とV0.21 SQLをRun済みなら、そのままでOKです。
+
+## V0.23 Center Combat Countdown
+
+### 攻撃した側
+ライン消去演出とは別の専用CENTER COMBAT ALERTを追加。
+攻撃が成立したら必ず中央に
+`攻撃したプレイヤー / ○○へ攻撃！ / 邪魔ブロックN列を送信`
+を表示。
+ライン消去FXに上書きされない。
+
+### 攻撃を受けた側
+攻撃プールだけに頼らず、中央盤面に攻撃元と着弾までのターン数を表示。
+
+受信時:
+`○○から攻撃！ / あと2ターンで邪魔ブロックN列`
+
+次のミノ設置後:
+`○○から攻撃！ / あと1ターンで邪魔ブロックN列`
+
+着弾時:
+`○○から攻撃！ / 邪魔ブロックN列 投下！`
+
+複数攻撃がある場合は、最も先に着弾する古い攻撃を中央通知の優先対象とする。
+右上の受けている攻撃表示は従来どおり維持。

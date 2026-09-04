@@ -64,6 +64,13 @@
         <div id="boardFrame" class="board-frame">
           <canvas id="board" width="400" height="800"></canvas>
           <div id="centerFx" class="center-fx"></div>
+          <div id="combatAlert" class="combat-alert hidden" aria-live="assertive">
+            <div id="combatAlertKicker" class="combat-alert-kicker">攻撃情報</div>
+            <div id="combatAlertName" class="combat-alert-name">PLAYER</div>
+            <div id="combatAlertMain" class="combat-alert-main">邪魔ブロック 0列</div>
+            <div id="combatAlertSub" class="combat-alert-sub"></div>
+          </div>
+
           <div id="resultOverlay" class="result-overlay hidden">
             <div class="result-card">
               <div id="resultKicker" class="result-kicker">MATCH RESULT</div>
@@ -102,11 +109,14 @@
       </section>
 
       <section class="side-panel glass side-right">
-        <div class="panel-title">受けている攻撃</div>
-        <div id="incomingBox" class="incoming-box compact-incoming">
-          <strong id="incomingAmount">0</strong>
-          <span>邪魔ブロック</span>
-          <small id="incomingTurns">SAFE</small>
+        <div class="panel-title">現在1位</div>
+        <div id="leaderBox" class="leader-box">
+          <div class="leader-crown">👑</div>
+          <div class="leader-copy">
+            <strong id="leaderName">集計中</strong>
+            <span id="leaderScore">SCORE —</span>
+            <small id="leaderGap">1位との差を計算中</small>
+          </div>
         </div>
 
         <div class="status-row">

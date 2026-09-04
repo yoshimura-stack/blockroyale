@@ -15,14 +15,34 @@ let match=null, onlineReady=false, joined=false, seenBattleNo=null;
 const processedAttackIds=new Set();
 const processingAttackIds=new Set();
 const attackSourceById=new Map();
+const incomingTurnNotice=new Map();
 let lastAttackTargetId=null,lastAttackerId=null,lastPeerRenderAt=0;
+let lastAttackAmount=0,lastIncomingAmount=0;
 
 function fx(text){const el=$("#centerFx");el.innerHTML=text;el.classList.remove("show");void el.offsetWidth;el.classList.add("show")}
 function updateIncoming(){
-  const total=game.incoming.reduce((s,p)=>s+p.amount,0);
-  $("#incomingAmount").textContent=total;
-  const min=game.incoming.length?Math.min(...game.incoming.map(p=>p.turns)):null;
-  $("#incomingTurns").textContent=min===null?"SAFE":`${Math.max(0,min)} TURN`;
+  // Incoming attacks are intentionally communicated on the center board.
+  // The former right-side attack pool is now used for the live #1 player panel.
+  renderLeaderPanel();
+}
+
+function renderLeaderPanel(){
+  const nameEl=$("#leaderName"), scoreEl=$("#leaderScore"), gapEl=$("#leaderGap");
+  if(!nameEl||!scoreEl||!gapEl)return;
+  const ranking=rankedPlayers().filter(p=>p.alive!==false);
+  if(!ranking.length){
+    nameEl.textContent="—"; scoreEl.textContent="SCORE —"; gapEl.textContent="対戦終了"; return;
+  }
+  const leader=ranking[0];
+  const myScore=game?.score||0;
+  const leaderScore=leader.score||0;
+  nameEl.textContent=leader.id===id?`${leader.name||name||"あなた"}（あなた）`:(leader.name||"PLAYER");
+  scoreEl.textContent=`SCORE ${leaderScore.toLocaleString()}`;
+  if(leader.id===id){
+    gapEl.textContent="あなたが現在1位！";
+  }else{
+    gapEl.textContent=`1位まで あと ${Math.max(0,leaderScore-myScore).toLocaleString()} POINT`;
+  }
 }
 
 const MINI_COLORS={I:"#4de6f2",O:"#ffd84d",T:"#b86cff",S:"#62e56f",Z:"#ff5e6f",J:"#5b82ff",L:"#ff9b45",G:"#69717f"};
@@ -45,7 +65,7 @@ function rankedPlayers(){
 }
 function rankOf(pid){const a=rankedPlayers(),i=a.findIndex(p=>p.id===pid);return i<0?null:i+1}
 function fillMini(pre,p,empty){$(`#${pre}Name`).textContent=p?.name||empty;$(`#${pre}Rank`).textContent=p?(p.alive===false?"K.O.":`#${rankOf(p.id)}`):"—";$(`#${pre}Score`).textContent=p?`SCORE ${(p.score||0).toLocaleString()}`:"SCORE —";drawMini(`#${pre}Board`,p?.snapshot||"")}
-function renderPeerHUD(){const a=rankedPlayers(),i=a.findIndex(p=>p.id===id);fillMini("rivalUp",i>0?a[i-1]:null,"該当なし");fillMini("rivalDown",i>=0&&i<a.length-1?a[i+1]:null,"該当なし");fillMini("target",lastAttackTargetId?peers.get(lastAttackTargetId):null,"まだ攻撃していません");fillMini("attacker",lastAttackerId?peers.get(lastAttackerId):null,"まだ攻撃を受けていません")}
+function renderPeerHUD(){const a=rankedPlayers(),i=a.findIndex(p=>p.id===id);fillMini("rivalUp",i>0?a[i-1]:null,"該当なし");fillMini("rivalDown",i>=0&&i<a.length-1?a[i+1]:null,"該当なし");fillMini("target",lastAttackTargetId?peers.get(lastAttackTargetId):null,"まだ攻撃していません");fillMini("attacker",lastAttackerId?peers.get(lastAttackerId):null,"まだ攻撃を受けていません");renderLeaderPanel()}
 function flashCard(sel){const el=$(sel);el.classList.remove("hit");void el.offsetWidth;el.classList.add("hit")}
 
 
@@ -121,6 +141,8 @@ function handleEmergencyReset(nextMatch){
  hideCountdown();
  hideResultOverlay();
  $("#battleToast").classList.add("hidden");
+ $("#combatAlert").classList.add("hidden");
+ incomingTurnNotice.clear();
  $("#centerFx").classList.remove("show");
  $("#centerFx").innerHTML="";
 
@@ -470,9 +492,8 @@ async function requestAttack(amount){
  peers.set(target.id,{...prev,name:target.player_name});
  $("#targetEvent").textContent=`${target.player_name} へ攻撃 / 邪魔ブロック ${amount}列`;
 
- // Make the target unmistakable in the CENTER of the board.
- // This deliberately replaces the generic "Nライン消去 / 攻撃N列" FX.
- fx(`⚔ 攻撃！<br><strong>${target.player_name}</strong><br><span>邪魔ブロック ${amount}列</span>`);
+ // Dedicated center notice; cannot be overwritten by line-clear FX.
+ showCombatAlert("outgoing",target.player_name,amount);
  showBattleToast("outgoing",target.player_name,amount);
 
  flashCard("#targetCard");
@@ -484,6 +505,69 @@ async function markKO(reason,score){
  await upsertStateRow();
 }
 
+
+
+let combatAlertTimer=null;
+
+function showCombatAlert(kind,playerName,amount,turns=null){
+ const box=$("#combatAlert");
+ const kicker=$("#combatAlertKicker");
+ const nameEl=$("#combatAlertName");
+ const main=$("#combatAlertMain");
+ const sub=$("#combatAlertSub");
+
+ clearTimeout(combatAlertTimer);
+ box.classList.remove("hidden","pop","outgoing","incoming","landing");
+ void box.offsetWidth;
+
+ const safeName=playerName||"プレイヤー";
+ nameEl.textContent=safeName;
+
+ if(kind==="outgoing"){
+   box.classList.add("outgoing");
+   kicker.textContent="攻撃したプレイヤー";
+   main.textContent=`${safeName} へ攻撃！`;
+   sub.textContent=`邪魔ブロック ${amount}列を送信`;
+ }else if(kind==="landing"){
+   box.classList.add("landing");
+   kicker.textContent="攻撃してきたプレイヤー";
+   main.textContent=`${safeName} から攻撃！`;
+   sub.textContent=`邪魔ブロック ${amount}列 投下！`;
+ }else{
+   box.classList.add("incoming");
+   kicker.textContent="攻撃してきたプレイヤー";
+   main.textContent=`${safeName} から攻撃！`;
+
+   if(turns<=1){
+     sub.textContent=`あと1ターンで邪魔ブロック ${amount}列`;
+   }else{
+     sub.textContent=`あと${turns}ターンで邪魔ブロック ${amount}列`;
+   }
+ }
+
+ box.classList.add("pop");
+
+ // Incoming countdown is intentionally held longer than a normal FX.
+ const ms = kind==="incoming" ? 1700 : 1500;
+ combatAlertTimer=setTimeout(()=>{
+   box.classList.add("hidden");
+   box.classList.remove("pop","outgoing","incoming","landing");
+ },ms);
+}
+
+function showIncomingCountdown(packets){
+ if(!packets?.length)return;
+
+ // Oldest incoming packet has priority in the center notice.
+ const packet=packets[0];
+ const attackerName=attackSourceById.get(packet.attackId)||"プレイヤー";
+ const prev=incomingTurnNotice.get(packet.attackId);
+
+ if(prev===packet.turns)return;
+ incomingTurnNotice.set(packet.attackId,packet.turns);
+
+ showCombatAlert("incoming",attackerName,packet.amount,packet.turns);
+}
 
 let battleToastTimer=null;
 
@@ -551,22 +635,25 @@ function callbacks(){
     game.maxAttack=Math.max(game.maxAttack,amount);
     requestAttack(amount);
   },
-  onIncoming:()=>{
+  onIncoming:packets=>{
     updateIncoming();
-    fx("⚠ 攻撃接近");
+    showIncomingCountdown(packets);
   },
   onGarbageLand:({amount,attackId})=>{
     const attackerName=attackSourceById.get(attackId)||"プレイヤー";
+    showCombatAlert("landing",attackerName,amount,0);
     showBattleToast("landing",attackerName,amount);
-    fx(`邪魔ブロック<br><span>${amount}列 投下</span>`);
     resolveAttackPersistence(attackId,"LANDED");
+    incomingTurnNotice.delete(attackId);
     attackSourceById.delete(attackId);
   },
   onIncomingSync:packets=>{
     for(const packet of packets)updateAttackPersistence(packet);
+    showIncomingCountdown(packets);
   },
   onIncomingResolved:({attackId,status})=>{
     resolveAttackPersistence(attackId,status);
+    incomingTurnNotice.delete(attackId);
     attackSourceById.delete(attackId);
   },
   onDefense:({perfect})=>fx(perfect?"完全相殺！":"相殺！"),
