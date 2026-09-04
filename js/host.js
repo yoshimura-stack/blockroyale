@@ -122,12 +122,18 @@ $("#nextBtn").onclick=async()=>{
 };
 $("#resetBtn").onclick=async()=>{
  finishingMatch=false;
- if(!match||!confirm("BLOCK-001の全テスト参加者・盤面・攻撃履歴をリセットしますか？"))return;
+ if(!match||!confirm("全プレイヤー・盤面・攻撃履歴を完全リセットしますか？"))return;
 
  const nextGeneration=(match.battle_no||1)+1;
 
+ // 1) 先に世代番号を更新。PLAYERへ「完全リセット」を通知。
  const {error:matchErr}=await supabase.from("matches")
-   .update({phase:"LOBBY",start_at:null,battle_no:nextGeneration,level:1})
+   .update({
+     phase:"LOBBY",
+     start_at:null,
+     battle_no:nextGeneration,
+     level:1
+   })
    .eq("id",match.id);
 
  if(matchErr){
@@ -138,12 +144,32 @@ $("#resetBtn").onclick=async()=>{
 
  match={...match,phase:"LOBBY",start_at:null,battle_no:nextGeneration,level:1};
  phase="LOBBY";
+ render();
 
- await new Promise(resolve=>setTimeout(resolve,700));
+ // 2) RealtimeがPLAYERへ届く猶予。
+ await new Promise(resolve=>setTimeout(resolve,900));
 
- await supabase.from("attacks").delete().eq("match_id",match.id);
- await supabase.from("player_states").delete().eq("match_id",match.id);
- await supabase.from("players").delete().eq("match_id",match.id);
+ const attackDelete=await supabase.from("attacks").delete().eq("match_id",match.id);
+ const stateDelete=await supabase.from("player_states").delete().eq("match_id",match.id);
+ const playerDelete=await supabase.from("players").delete().eq("match_id",match.id);
+
+ if(attackDelete.error||stateDelete.error||playerDelete.error){
+   console.error("reset delete error",{
+     attacks:attackDelete.error,
+     states:stateDelete.error,
+     players:playerDelete.error
+   });
+ }
+
+ // 3) DBの正しい現在状態をもう一度確定。
+ await supabase.from("matches")
+   .update({
+     phase:"LOBBY",
+     start_at:null,
+     battle_no:nextGeneration,
+     level:1
+   })
+   .eq("id",match.id);
 
  players.clear();
  render();

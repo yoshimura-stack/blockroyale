@@ -66,7 +66,16 @@ function handleEmergencyReset(nextMatch){
  name="";
  currentPhase="LOBBY";
  softDropHeld=false;
+ lastSoftDropAt=0;
+
  processedAttackIds.clear();
+ attackSourceById.clear();
+
+ if(game){
+   game.started=false;
+   game.alive=true;
+ }
+
  clearPeerHUD();
  newGame();
 
@@ -76,7 +85,10 @@ function handleEmergencyReset(nextMatch){
  $("#score").textContent="0";
  $("#level").textContent="1";
  $("#alive").textContent="0";
+
+ // 強制的にPLAYER ENTRYへ戻す
  $("#overlay").classList.remove("hidden");
+ $("#overlay").style.display="";
  hideCountdown();
  hideResultOverlay();
  $("#battleToast").classList.add("hidden");
@@ -84,7 +96,6 @@ function handleEmergencyReset(nextMatch){
  if(nextMatch)match={...match,...nextMatch};
  seenBattleNo=match?.battle_no??seenBattleNo;
 }
-
 
 async function fetchFinalPlayers(){
  if(!match)return [];
@@ -150,6 +161,37 @@ function handleMatchResult(){
  }
  showResultOverlay();
 }
+async function syncMatchTruth(){
+ if(!match)return;
+
+ const {data,error}=await supabase
+   .from("matches")
+   .select("id,phase,battle_no,start_at,level")
+   .eq("id",match.id)
+   .single();
+
+ if(error){
+   console.error("match self-heal",error);
+   return;
+ }
+
+ const generationChanged=
+   seenBattleNo!==null &&
+   data.battle_no!==seenBattleNo;
+
+ if(generationChanged && data.phase==="LOBBY"){
+   handleEmergencyReset(data);
+   return;
+ }
+
+ match={...match,...data};
+ seenBattleNo=data.battle_no;
+
+ if(data.phase==="RESULT"&&currentPhase!=="RESULT"){
+   handleMatchResult();
+ }
+}
+
 async function upsertPlayerRow(){
  if(!match||!name)return;
  const payload={id,match_id:match.id,player_name:name,ready:true,alive:game?.alive!==false,score:game?.score||0,max_combo:game?.maxCombo||0,max_attack:game?.maxAttack||0};
@@ -471,3 +513,4 @@ function loop(now){
 }
 requestAnimationFrame(loop);
 setInterval(sendState,CONFIG.SNAPSHOT_INTERVAL_MS);
+setInterval(()=>{ if(match)syncMatchTruth(); },1000);

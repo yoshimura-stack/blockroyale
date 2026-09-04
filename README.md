@@ -195,3 +195,12 @@ Three.jsによる本格3Dレンダラーは、まずこの2Dロジックを安�
 - 攻撃送信時に相手名と邪魔ブロック列数を中央表示
 - 攻撃受信時に相手名と接近中の邪魔ブロック列数を中央表示
 - 邪魔ブロックが実際にせり上がる瞬間に「攻撃してきたプレイヤー / 名前 / 邪魔ブロックN列投下」を中央表示
+
+## V0.16 Emergency Reset Self-Heal
+- EMERGENCY RESET後にPLAYER画面が旧試合のまま残る問題を修正
+- PLAYER復帰をRealtime UPDATEだけに依存しないよう変更
+- 1秒ごとにmatchesをDB確認し、battle_no世代変更 + LOBBYを検知したら強制的にENTRY画面へ復帰
+- RESET時はゲーム停止、名前/盤面/RIVALS/BATTLE/攻撃元/RESULT/COUNTDOWN/TOASTを全クリア
+- joined=falseで500ms周期upsertを停止し、削除済みPLAYERがDBへ復活しないようにする
+- HOSTは世代更新 → 900ms待機 → attacks/player_states/players削除 → LOBBY再確定
+- Realtime = 速報 / DB = 真実 / polling = Self Heal の構成
