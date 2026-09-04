@@ -25,12 +25,42 @@ function updateIncoming(){
 
 const MINI_COLORS={I:"#4de6f2",O:"#ffd84d",T:"#b86cff",S:"#62e56f",Z:"#ff5e6f",J:"#5b82ff",L:"#ff9b45",G:"#69717f"};
 function drawMini(sel,snap){const cv=$(sel),c=cv.getContext("2d"),W=10,H=20,cw=cv.width/W,ch=cv.height/H;c.fillStyle="#05070a";c.fillRect(0,0,cv.width,cv.height);if(!snap||snap.length<200)return;for(let i=0;i<200;i++){const v=snap[i];if(v===".")continue;c.fillStyle=MINI_COLORS[v]||"#77808e";c.fillRect((i%W)*cw+.5,Math.floor(i/W)*ch+.5,cw-1,ch-1)}}
-function rankedAlive(){const map=new Map([...peers].filter(([_,p])=>p.alive!==false));map.set(id,{id,name,alive:game?.alive!==false,score:game?.score||0,snapshot:game?.snapshot?.()||""});return [...map.values()].sort((a,b)=>(b.score||0)-(a.score||0)||String(a.name).localeCompare(String(b.name)))}
-function rankOf(pid){const a=rankedAlive(),i=a.findIndex(p=>p.id===pid);return i<0?null:i+1}
+function rankedPlayers(){
+ const map=new Map(peers);
+ map.set(id,{
+   id,
+   name,
+   alive:game?.alive!==false,
+   score:game?.score||0,
+   snapshot:game?.snapshot?.()||""
+ });
+ return [...map.values()].sort((a,b)=>{
+   // Alive players always rank above K.O. players.
+   if((a.alive!==false)!==(b.alive!==false)) return a.alive!==false ? -1 : 1;
+   // Within the same status, higher score is shown higher for the live HUD.
+   return (b.score||0)-(a.score||0)||String(a.name).localeCompare(String(b.name));
+ });
+}
+function rankOf(pid){const a=rankedPlayers(),i=a.findIndex(p=>p.id===pid);return i<0?null:i+1}
 function fillMini(pre,p,empty){$(`#${pre}Name`).textContent=p?.name||empty;$(`#${pre}Rank`).textContent=p?(p.alive===false?"K.O.":`#${rankOf(p.id)}`):"—";$(`#${pre}Score`).textContent=p?`SCORE ${(p.score||0).toLocaleString()}`:"SCORE —";drawMini(`#${pre}Board`,p?.snapshot||"")}
-function renderPeerHUD(){const a=rankedAlive(),i=a.findIndex(p=>p.id===id);fillMini("rivalUp",i>0?a[i-1]:null,"NO UPPER RIVAL");fillMini("rivalDown",i>=0&&i<a.length-1?a[i+1]:null,"NO LOWER RIVAL");fillMini("target",lastAttackTargetId?peers.get(lastAttackTargetId):null,"NO TARGET");fillMini("attacker",lastAttackerId?peers.get(lastAttackerId):null,"NO ATTACKER")}
+function renderPeerHUD(){const a=rankedPlayers(),i=a.findIndex(p=>p.id===id);fillMini("rivalUp",i>0?a[i-1]:null,"NO UPPER RIVAL");fillMini("rivalDown",i>=0&&i<a.length-1?a[i+1]:null,"NO LOWER RIVAL");fillMini("target",lastAttackTargetId?peers.get(lastAttackTargetId):null,"NO TARGET");fillMini("attacker",lastAttackerId?peers.get(lastAttackerId):null,"NO ATTACKER")}
 function flashCard(sel){const el=$(sel);el.classList.remove("hit");void el.offsetWidth;el.classList.add("hit")}
 
+
+
+function handleMatchResult(){
+ if(!game)return;
+ game.started=false;
+ softDropHeld=false;
+ currentPhase="RESULT";
+
+ if(game.alive){
+   $("#statusText").textContent="WINNER";
+   fx("👑 WINNER");
+ }else{
+   $("#statusText").textContent="K.O.";
+ }
+}
 
 async function upsertPlayerRow(){
  if(!match||!name)return;
@@ -71,6 +101,9 @@ async function subscribeOnline(){
     if(match.phase==="COUNTDOWN"&&match.start_at){
       const startAt=Date.parse(match.start_at);
       if(currentPhase!=="COUNTDOWN"&&!game.started)startMatch(startAt);
+    }
+    if(match.phase==="RESULT"&&currentPhase!=="RESULT"){
+      handleMatchResult();
     }
     if(match.phase==="LOBBY"&&currentPhase!=="LOBBY"){
       currentPhase="LOBBY";newGame();$("#statusText").textContent="READY";

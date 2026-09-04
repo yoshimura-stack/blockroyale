@@ -145,3 +145,20 @@ Three.jsによる本格3Dレンダラーは、まずこの2Dロジックを安�
 - READY処理も丸ごと再構築
 - READY中は CONNECTING、成功後 READY、失敗時 ERROR を表示
 - jsフォルダ内の全JavaScriptを Node --check で構文検証
+
+## V0.10 Auto Match End
+- HOSTがBATTLE中のALIVE人数を監視
+- 2人以上で開始した試合でALIVEが1人以下になった瞬間、matches.phaseをRESULTへ変更
+- 最後の1人をWINNERとして停止
+- PLAYERの生存者は `👑 WINNER` 表示で操作停止
+- K.O.済みPLAYERはそのままK.O.表示
+- PROJECTORはRESULTでWINNERを大表示
+- NEXT BATTLEで再びLOBBYへ戻せる
+
+## V0.11 Rival Rank Fix
+- RIVALSの順位計算を「生存者だけ」から「試合参加者全体」に修正
+- 生存者はK.O.済みプレイヤーより上位として扱う
+- 1位ならRIVAL ↑は空白のまま
+- 1位でも直下のRIVAL ↓は必ず表示可能
+- K.O.後も直近順位のライバル盤面を表示できる
+- BATTLEのATTACK TARGET / ATTACKER仕様は変更なし

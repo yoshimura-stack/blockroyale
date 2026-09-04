@@ -8,6 +8,15 @@ function render(){
  $("#ranking").innerHTML=alive.sort((a,b)=>(b.score||0)-(a.score||0)).slice(0,10).map((p,i)=>`<div class="rank-chip"><b>#${i+1}</b> ${p.name} · ${(p.score||0).toLocaleString()}</div>`).join("");
  if(phase==="LOBBY"){$("#heroText").textContent="LOBBY";$("#timerText").textContent=`READY ${arr.filter(p=>p.ready).length}`;}
 }
+function renderResult(){
+ const arr=[...players.values()];
+ const winner=arr.find(p=>p.alive!==false);
+ $("#phase").textContent="RESULT";
+ $("#aliveCount").textContent=winner?1:0;
+ $("#heroText").textContent=winner?`👑 ${winner.name}`:"MATCH OVER";
+ $("#timerText").textContent=winner?"WINNER":"NO SURVIVOR";
+}
+
 async function loadPlayers(){
  const {data}=await supabase.from("players").select("id,player_name,ready,alive,score").eq("match_id",match.id);
  players.clear();for(const p of data||[])players.set(p.id,{id:p.id,name:p.player_name,ready:p.ready,alive:p.alive,score:p.score||0});render();
@@ -19,7 +28,7 @@ async function init(){
     const p=payload.new||payload.old;if(!p)return;players.set(p.id,{id:p.id,name:p.player_name,ready:p.ready,alive:p.alive,score:p.score||0});render();
   })
   .on("postgres_changes",{event:"UPDATE",schema:"public",table:"matches",filter:`id=eq.${match.id}`},payload=>{
-    match={...match,...payload.new};phase=match.phase;if(match.start_at){startAt=Date.parse(match.start_at);attackUnlockAt=startAt+CONFIG.OPENING_ATTACK_LOCK_MS;}render();
+    match={...match,...payload.new};phase=match.phase;if(match.start_at){startAt=Date.parse(match.start_at);attackUnlockAt=startAt+CONFIG.OPENING_ATTACK_LOCK_MS;}if(phase==="RESULT")renderResult();else render();
   }).subscribe();
 }
 function loop(){
