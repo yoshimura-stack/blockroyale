@@ -129,3 +129,9 @@ Three.jsによる本格3Dレンダラーは、まずこの2Dロジックを安�
 8. 両PLAYERで3→2→1→START!
 9. RIVALS MINI BOARDが相互更新
 10. 2LINE以上消して相手INCOMING確認
+
+## V0.9a Auth Fix
+- Supabase接続キーを Legacy anon/public key に切替
+- 401認証エラーの切り分け用
+- service_role / secret key は未使用
+- HOST画面の旧BroadcastChannel注記をSUPABASE ONLINE表示へ更新
