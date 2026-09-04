@@ -25,12 +25,16 @@ export class Tetris {
     this.cb=callbacks;
     this.reset();
   }
+  now(){
+    const v=this.cb.clock?.();
+    return Number.isFinite(v)?v:Date.now();
+  }
   reset(){
     this.board=Array.from({length:CONFIG.BOARD_H},()=>Array(CONFIG.BOARD_W).fill(null));
     this.bag=[]; this.queue=[];
     this.score=0; this.lines=0; this.combo=0; this.maxCombo=0; this.maxAttack=0;
     this.level=1; this.alive=true; this.started=false; this.current=null;
-    this.lockStarted=null; this.lockResets=0; this.lastFall=performance.now();
+    this.lockStarted=null; this.lockResets=0; this.lastFall=this.now();
     this.incoming=[]; this.lastActionAt=0; this.hiddenRows=[]; this.lastChance=false;
     this.fillQueue(); this.spawn();
   }
@@ -87,7 +91,7 @@ export class Tetris {
   }
   resetLockByMove(){
     if(this.isGrounded() && this.lockResets<CONFIG.LOCK_RESET_LIMIT){
-      this.lockStarted=performance.now(); this.lockResets++;
+      this.lockStarted=this.now(); this.lockResets++;
     }
   }
   isGrounded(){ return this.current && this.collides(this.current.x,this.current.y+1,this.current.matrix); }
@@ -100,7 +104,7 @@ export class Tetris {
       this.lockStarted=null;
       return true;
     }
-    if(this.lockStarted===null)this.lockStarted=performance.now();
+    if(this.lockStarted===null)this.lockStarted=this.now();
     return false;
   }
   hardDrop(){
@@ -110,21 +114,61 @@ export class Tetris {
     this.cb.onScore?.(this.score);
     this.lock(true);
   }
-  stepDown(){
+  stepDown(at=this.now()){
     if(!this.alive||!this.current) return;
     if(!this.collides(this.current.x,this.current.y+1,this.current.matrix)){
-      this.current.y++; this.lockStarted=null;
+      this.current.y++;
+      this.lockStarted=null;
     }else if(this.lockStarted===null){
-      this.lockStarted=performance.now();
+      this.lockStarted=at;
     }
   }
-  tick(now){
+  tick(now=this.now()){
     if(!this.started||!this.alive||!this.current) return;
-    const speed=CONFIG.SPEEDS_MS[Math.min(this.level-1,CONFIG.SPEEDS_MS.length-1)];
-    if(now-this.lastFall>=speed){this.stepDown();this.lastFall=now;}
-    if(this.isGrounded()){
+
+    // Background tabs can suspend requestAnimationFrame for minutes.
+    // Process every gravity/lock event that should have happened up to "now".
+    let guard=0;
+    const GUARD_MAX=12000;
+
+    while(this.started&&this.alive&&this.current&&guard++<GUARD_MAX){
+      const levelAtLastFall=this.cb.levelAt?.(this.lastFall) ?? this.level;
+      if(levelAtLastFall!==this.level){
+        this.level=Math.max(1,levelAtLastFall);
+      }
+
+      const speed=CONFIG.SPEEDS_MS[Math.min(this.level-1,CONFIG.SPEEDS_MS.length-1)];
+      const nextFall=this.lastFall+speed;
+      const grounded=this.isGrounded();
+      const nextLock=(grounded&&this.lockStarted!==null)
+        ? this.lockStarted+CONFIG.LOCK_DELAY_MS
+        : Infinity;
+
+      const nextEvent=Math.min(nextFall,nextLock);
+      if(nextEvent>now)break;
+
+      if(nextLock<=nextFall){
+        this.lock(false);
+        // A newly spawned piece starts its gravity schedule from the lock time.
+        this.lastFall=nextLock;
+        continue;
+      }
+
+      this.stepDown(nextFall);
+      this.lastFall=nextFall;
+    }
+
+    // Final lock check when "now" falls between gravity events.
+    if(this.started&&this.alive&&this.current&&this.isGrounded()){
       if(this.lockStarted===null)this.lockStarted=now;
-      if(now-this.lockStarted>=CONFIG.LOCK_DELAY_MS)this.lock(false);
+      if(now-this.lockStarted>=CONFIG.LOCK_DELAY_MS){
+        this.lock(false);
+        this.lastFall=now;
+      }
+    }
+
+    if(guard>=GUARD_MAX){
+      console.warn("Tetris catch-up guard reached");
     }
   }
   lock(fromHardDrop=false){
@@ -181,6 +225,10 @@ export class Tetris {
         const used=Math.min(packet.amount,surplus);
         packet.amount-=used;surplus-=used;
       }
+      const cancelled=this.incoming.filter(p=>p.amount<=0);
+      for(const packet of cancelled){
+        this.cb.onIncomingResolved?.({attackId:packet.attackId,status:"CANCELLED"});
+      }
       this.incoming=this.incoming.filter(p=>p.amount>0);
       if(attack>0 && surplus===0)this.cb.onDefense?.({perfect:this.incoming.length===0});
     }
@@ -194,16 +242,19 @@ export class Tetris {
     for(const packet of this.incoming) packet.turns--;
     const due=this.incoming.filter(p=>p.turns<=0);
     this.incoming=this.incoming.filter(p=>p.turns>0);
+    this.cb.onIncomingSync?.(this.incoming.map(p=>({...p})));
     for(const packet of due) this.applyGarbage(packet);
 
     this.cb.onStats?.(this.stats());
     if(this.alive)this.spawn();
   }
-  receiveAttack(amount, attackId="local"){
+  receiveAttack(amount, attackId="local", turns=CONFIG.INCOMING_TURNS){
     if(!this.alive||amount<=0)return;
+    if(this.incoming.some(p=>p.attackId===attackId))return;
     const hole=Math.floor(Math.random()*CONFIG.BOARD_W);
-    this.incoming.push({amount,turns:CONFIG.INCOMING_TURNS,hole,attackId});
+    this.incoming.push({amount,turns:Math.max(0,turns),hole,attackId});
     this.cb.onIncoming?.(this.incoming);
+    this.cb.onIncomingSync?.(this.incoming.map(p=>({...p})));
   }
   applyGarbage(packet){
     let overflow=false;
@@ -231,7 +282,7 @@ export class Tetris {
     }
   }
   setLevel(lv){this.level=Math.max(1,lv);this.cb.onStats?.(this.stats());}
-  start(){this.started=true;this.lastFall=performance.now();}
+  start(now=this.now()){this.started=true;this.lastFall=now;}
   ko(reason){
     if(!this.alive)return;
     this.alive=false;this.started=false;this.cb.onKO?.({reason,score:this.score});

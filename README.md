@@ -204,3 +204,43 @@ Three.jsによる本格3Dレンダラーは、まずこの2Dロジックを安�
 - joined=falseで500ms周期upsertを停止し、削除済みPLAYERがDBへ復活しないようにする
 - HOSTは世代更新 → 900ms待機 → attacks/player_states/players削除 → LOBBY再確定
 - Realtime = 速報 / DB = 真実 / polling = Self Heal の構成
+
+## V0.17 Responsive Player HUD
+- PCウィンドウを小さくしても3カラムを維持
+- 左RIVALS / 中央盤面 / 右攻撃情報を1画面に収める
+- 盤面は10:20比率を維持し、20行全体が見える高さへ自動縮小
+- 1536x864 / 1366x768クラスでは左右カード・文字・NEXTを段階的に縮小
+- 狭いPCウィンドウではNEXT表示を省略してでもRIVALSと攻撃情報を維持
+- 760px未満のみ縦レイアウトへ切替
+- 通常PCプレイ中はページ全体の縦スクロールを禁止
+
+## V0.18 Outgoing Target Emphasis
+- 攻撃した側の中央通知を、相手プレイヤー名が最優先で目に入る表示へ変更
+- `攻撃成功！ / ○○ へ攻撃 / 邪魔ブロック N列を送信`
+- 右側の攻撃履歴も `○○ へ攻撃 / 邪魔ブロック N列` に統一
+- 通知表示時間を1.65秒へ少し延長
+
+## V0.19 Emergency Reset Definitive Fix
+- 原因を特定: playersのRealtime handlerが `row.id===自分` を先にreturnしていたため、自分自身のDELETEイベントを無視していた
+- EMERGENCY RESETで自分のplayers rowがDELETEされたら、その瞬間にPLAYER ENTRYへ強制復帰
+- さらに1秒ごとに「自分のplayers rowがDBに存在するか」を確認するSelf Healを追加
+- NEXT BATTLEはplayers rowを残すため復帰しない
+- EMERGENCY RESETだけ確実にENTRYへ戻る
+
+## V0.20 Server Clock / Background Catch-up
+- 最小化・バックグラウンド中もゲーム時間を停止しない
+- Tetris tickを1フレーム1段方式から、経過時間分を追いつくCatch-up方式へ変更
+- 復帰時に最小化中に本来起きていた落下・接地・ロック・次ミノまでまとめて現在時刻へ追いつく
+- 数分最小化していた場合、盤面状況によっては復帰時点ですでにK.O.になる
+- HOST / PLAYER / PROJECTORの時刻基準をSupabase `server_now_ms()` に統一
+- 30秒ごと・復帰時にServer Clockを再同期
+- visibilitychange / focus / pageshowで復帰を検知
+- 復帰時にDBからPENDING攻撃を再取得し、Realtime取りこぼしをSelf Heal
+- 邪魔ブロックの残量・残りターンをattacksテーブルへ同期
+- 完全相殺はCANCELLED、着弾はLANDEDとしてDBに記録
+- Realtime = 速報 / DB = 真実 / Server Clock = 時間の真実
+
+### V0.20で追加SQL
+GitHub反映前後どちらでもよいので、Supabase SQL Editorで
+`supabase_v020_server_clock.sql`
+を1回だけ実行してください。

@@ -1,7 +1,7 @@
 import {CONFIG} from "./config.js";
 import {Tetris} from "./tetris.js";
 import {Renderer} from "./render.js";
-import {supabase,getRoom,compactBoardToJson,jsonBoardToCompact} from "./supabase.js";
+import {supabase,getRoom,compactBoardToJson,jsonBoardToCompact,serverNow,syncServerClock} from "./supabase.js";
 
 const $=s=>document.querySelector(s);
 const board=$("#board"), next=$("#nextCanvas");
@@ -13,6 +13,7 @@ let game;
 const peers=new Map();
 let match=null, onlineReady=false, joined=false, seenBattleNo=null;
 const processedAttackIds=new Set();
+const processingAttackIds=new Set();
 const attackSourceById=new Map();
 let lastAttackTargetId=null,lastAttackerId=null,lastPeerRenderAt=0;
 
@@ -161,6 +162,27 @@ function handleMatchResult(){
  }
  showResultOverlay();
 }
+async function syncOwnPlayerTruth(){
+ if(!match||!joined)return;
+
+ const {data,error}=await supabase
+   .from("players")
+   .select("id")
+   .eq("id",id)
+   .maybeSingle();
+
+ if(error){
+   console.error("player self-heal",error);
+   return;
+ }
+
+ // Emergency Reset removes the PLAYER row entirely.
+ // NEXT BATTLE keeps it, so this cleanly distinguishes the two operations.
+ if(!data){
+   handleEmergencyReset(match);
+ }
+}
+
 async function syncMatchTruth(){
  if(!match)return;
 
@@ -204,6 +226,102 @@ async function upsertStateRow(){
  const {error}=await supabase.from("player_states").upsert(payload,{onConflict:"player_id"});
  if(error)console.error("state upsert",error);
 }
+
+async function updateAttackPersistence(packet){
+ if(!match||!packet?.attackId||packet.attackId==="local")return;
+ await supabase.from("attacks").update({
+   amount:packet.amount,
+   turns_remaining:packet.turns
+ }).eq("id",packet.attackId).eq("target_id",id).eq("status","PENDING");
+}
+
+async function resolveAttackPersistence(attackId,status){
+ if(!match||!attackId||attackId==="local")return;
+ await supabase.from("attacks").update({
+   status,
+   processed_at:new Date(serverNow()).toISOString()
+ }).eq("id",attackId).eq("target_id",id);
+}
+
+async function processIncomingAttackRow(a){
+ if(!a||a.target_id!==id||a.status!=="PENDING"||!game?.alive)return;
+ if(processedAttackIds.has(a.id)||processingAttackIds.has(a.id))return;
+
+ processingAttackIds.add(a.id);
+ try{
+   const attacker=peers.get(a.attacker_id);
+   let attackerName=attacker?.name;
+
+   if(!attackerName){
+     const {data}=await supabase.from("players")
+       .select("player_name")
+       .eq("id",a.attacker_id)
+       .maybeSingle();
+     attackerName=data?.player_name||"プレイヤー";
+   }
+
+   processedAttackIds.add(a.id);
+   lastAttackerId=a.attacker_id;
+   attackSourceById.set(a.id,attackerName);
+
+   $("#attackerEvent").textContent=`${attackerName} から ${a.amount}列の攻撃`;
+   showBattleToast("incoming",attackerName,a.amount);
+   flashCard("#attackerCard");
+
+   game.receiveAttack(
+     a.amount,
+     a.id,
+     Number.isFinite(Number(a.turns_remaining)) ? Number(a.turns_remaining) : CONFIG.INCOMING_TURNS
+   );
+   updateIncoming();
+   renderPeerHUD();
+ }finally{
+   processingAttackIds.delete(a.id);
+ }
+}
+
+async function syncPendingAttacks(){
+ if(!match||!joined||!game?.alive)return;
+
+ const {data,error}=await supabase.from("attacks")
+   .select("id,match_id,attacker_id,target_id,amount,turns_remaining,status,created_at")
+   .eq("match_id",match.id)
+   .eq("target_id",id)
+   .eq("status","PENDING")
+   .order("created_at",{ascending:true});
+
+ if(error){
+   console.error("pending attack self-heal",error);
+   return;
+ }
+
+ for(const a of data||[]){
+   await processIncomingAttackRow(a);
+ }
+}
+
+async function catchUpToNow(showFx=false){
+ if(!game?.started||!game.alive||currentPhase!=="BATTLE")return;
+
+ const now=serverNow();
+ const elapsed=Math.max(0,now-matchStartAt);
+ const lv=1+Math.floor(elapsed/CONFIG.LEVEL_INTERVAL_MS);
+
+ if(lv!==game.level){
+   game.setLevel(lv);
+ }
+
+ if(showFx)fx("時間同期中…");
+ game.tick(now);
+ renderer.draw(game);
+ updateIncoming();
+ sendState();
+
+ if(showFx&&game.alive){
+   setTimeout(()=>fx("現在時刻に同期"),120);
+ }
+}
+
 async function loadPeers(){
  if(!match)return;
  const {data,error}=await supabase.from("players").select("id,player_name,alive,score,max_combo,max_attack,player_states(board,level,combo,incoming_garbage)").eq("match_id",match.id);
@@ -222,6 +340,7 @@ async function refreshAliveCount(){
  if(!error)$("#alive").textContent=count??0;
 }
 async function subscribeOnline(){
+ await syncServerClock();
  match=await getRoom();
  seenBattleNo=match.battle_no;
  await upsertPlayerRow(); await upsertStateRow(); await loadPeers(); await refreshAliveCount();
@@ -256,7 +375,18 @@ async function subscribeOnline(){
 
  supabase.channel(`players-${match.id}`)
   .on("postgres_changes",{event:"*",schema:"public",table:"players",filter:`match_id=eq.${match.id}`},async payload=>{
-    const row=payload.new||payload.old;if(!row||row.id===id)return;
+    const row=payload.new||payload.old;
+    if(!row)return;
+
+    // EMERGENCY RESET deletes this player's own row.
+    // Do NOT ignore self DELETE: it is the most reliable reset signal.
+    if(payload.eventType==="DELETE" && row.id===id){
+      handleEmergencyReset(match);
+      return;
+    }
+
+    if(row.id===id)return;
+
     if(payload.eventType==="DELETE"){
       peers.delete(row.id);
       if(lastAttackTargetId===row.id)lastAttackTargetId=null;
@@ -280,18 +410,7 @@ async function subscribeOnline(){
 
  supabase.channel(`attacks-${id}`)
   .on("postgres_changes",{event:"INSERT",schema:"public",table:"attacks",filter:`target_id=eq.${id}`},payload=>{
-    const a=payload.new;if(!a||processedAttackIds.has(a.id)||!game.alive)return;
-    processedAttackIds.add(a.id);
-    lastAttackerId=a.attacker_id;
-    const attacker=peers.get(a.attacker_id);
-    const attackerName=attacker?.name||"プレイヤー";
-    attackSourceById.set(a.id,attackerName);
-    $("#attackerEvent").textContent=`${attackerName} から ${a.amount}列の攻撃`;
-    showBattleToast("incoming",attackerName,a.amount);
-    flashCard("#attackerCard");
-    game.receiveAttack(a.amount,a.id);
-    updateIncoming();
-    renderPeerHUD();
+    processIncomingAttackRow(payload.new);
   }).subscribe();
 
  onlineReady=true;
@@ -306,7 +425,7 @@ async function requestAttack(amount){
  lastAttackTargetId=target.id;lastAttackAmount=amount;
  const prev=peers.get(target.id)||{id:target.id,name:target.player_name,alive:true,score:0,snapshot:""};
  peers.set(target.id,{...prev,name:target.player_name});
- $("#targetEvent").textContent=`${target.player_name} に ${amount}列の攻撃`;
+ $("#targetEvent").textContent=`${target.player_name} へ攻撃 / 邪魔ブロック ${amount}列`;
  showBattleToast("outgoing",target.player_name,amount);
  flashCard("#targetCard");
  renderPeerHUD();
@@ -321,14 +440,19 @@ async function markKO(reason,score){
 let battleToastTimer=null;
 
 function showBattleToast(kind,playerName,amount){
- const toast=$("#battleToast"),label=$("#battleToastLabel"),main=$("#battleToastMain"),sub=$("#battleToastSub");
+ const toast=$("#battleToast");
+ const label=$("#battleToastLabel");
+ const main=$("#battleToastMain");
+ const sub=$("#battleToastSub");
+
  clearTimeout(battleToastTimer);
  toast.classList.remove("hidden","show","outgoing","incoming");
  void toast.offsetWidth;
+
  if(kind==="outgoing"){
    toast.classList.add("outgoing");
-   label.textContent="攻撃したプレイヤー";
-   main.textContent=playerName||"プレイヤー";
+   label.textContent="攻撃成功！";
+   main.textContent=`${playerName||"プレイヤー"} へ攻撃`;
    sub.textContent=`邪魔ブロック ${amount}列を送信`;
  }else if(kind==="landing"){
    toast.classList.add("incoming");
@@ -341,11 +465,18 @@ function showBattleToast(kind,playerName,amount){
    main.textContent=playerName||"プレイヤー";
    sub.textContent=`邪魔ブロック ${amount}列が接近中`;
  }
+
  toast.classList.add("show");
- battleToastTimer=setTimeout(()=>{toast.classList.add("hidden");toast.classList.remove("show","outgoing","incoming");},1450);
+
+ battleToastTimer=setTimeout(()=>{
+   toast.classList.add("hidden");
+   toast.classList.remove("show","outgoing","incoming");
+ },1650);
 }
 function callbacks(){
  return {
+  clock:()=>serverNow(),
+  levelAt:ts=>Math.max(1,1+Math.floor(Math.max(0,ts-matchStartAt)/CONFIG.LEVEL_INTERVAL_MS)),
   onNext:t=>renderer.drawNext(t),
   onScore:s=>$("#score").textContent=s.toLocaleString(),
   onStats:s=>{
@@ -380,6 +511,14 @@ function callbacks(){
     const attackerName=attackSourceById.get(attackId)||"プレイヤー";
     showBattleToast("landing",attackerName,amount);
     fx(`邪魔ブロック<br><span>${amount}列 投下</span>`);
+    resolveAttackPersistence(attackId,"LANDED");
+    attackSourceById.delete(attackId);
+  },
+  onIncomingSync:packets=>{
+    for(const packet of packets)updateAttackPersistence(packet);
+  },
+  onIncomingResolved:({attackId,status})=>{
+    resolveAttackPersistence(attackId,status);
     attackSourceById.delete(attackId);
   },
   onDefense:({perfect})=>fx(perfect?"完全相殺！":"相殺！"),
@@ -446,14 +585,14 @@ function startMatch(startAt){
  newGame();matchStartAt=startAt;attackUnlockAt=startAt+CONFIG.OPENING_ATTACK_LOCK_MS;currentPhase="COUNTDOWN";
  let lastShown=null;
  const countdown=()=>{
-  const d=startAt-Date.now();
+  const d=startAt-serverNow();
   if(d>0){
     const n=Math.max(1,Math.ceil(d/1000));
     if(n!==lastShown){showCountdown(String(n),false);lastShown=n;}
     requestAnimationFrame(countdown);
   }else{
    showCountdown("START!",true);
-   game.start();currentPhase="BATTLE";$("#statusText").textContent="OPENING";
+   game.start(serverNow());currentPhase="BATTLE";$("#statusText").textContent="OPENING";
    setTimeout(()=>hideCountdown(),850);
    sendState();
   }
@@ -492,25 +631,89 @@ window.addEventListener("keyup",e=>{
 
 window.addEventListener("blur",()=>{softDropHeld=false;});
 
-function loop(now){
+function loop(){
  if(game){
+  const now=serverNow();
+
   if(game.started&&game.alive){
-   const elapsed=Math.max(0,Date.now()-matchStartAt);
+   const elapsed=Math.max(0,now-matchStartAt);
    const lv=1+Math.floor(elapsed/CONFIG.LEVEL_INTERVAL_MS);
-   if(lv!==game.level){game.setLevel(lv);fx(`SPEED UP<br><span>LEVEL ${lv}</span>`);}
-   if(Date.now()<attackUnlockAt){$("#statusText").textContent=`OPENING ${Math.ceil((attackUnlockAt-Date.now())/1000)}`;}
-   else if($("#statusText").textContent.startsWith("OPENING")){ $("#statusText").textContent="BATTLE";fx("ATTACK UNLOCKED");}
+
+   if(lv!==game.level){
+     game.setLevel(lv);
+     fx(`スピードアップ<br><span>LEVEL ${lv}</span>`);
+   }
+
+   if(now<attackUnlockAt){
+     $("#statusText").textContent=`攻撃準備 ${Math.ceil((attackUnlockAt-now)/1000)}`;
+   }else if(
+     $("#statusText").textContent.startsWith("OPENING") ||
+     $("#statusText").textContent.startsWith("攻撃準備")
+   ){
+     $("#statusText").textContent="対戦中";
+     fx("攻撃解禁！");
+   }
+
    if(softDropHeld && now-lastSoftDropAt>=CONFIG.SOFT_DROP_MS){
      game.softDrop();
      lastSoftDropAt=now;
    }
+
+   // tick() catches up all gravity/lock events missed while hidden/minimized.
    game.tick(now);
   }
+
   renderer.draw(game);
-  if(now-lastPeerRenderAt>500){renderPeerHUD();lastPeerRenderAt=now;}
+  if(now-lastPeerRenderAt>500){
+    renderPeerHUD();
+    lastPeerRenderAt=now;
+  }
  }
  requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
 setInterval(sendState,CONFIG.SNAPSHOT_INTERVAL_MS);
 setInterval(()=>{ if(match)syncMatchTruth(); },1000);
+setInterval(()=>{ if(match&&joined)syncOwnPlayerTruth(); },1000);
+
+setInterval(()=>{ if(match&&joined)syncPendingAttacks(); },2000);
+
+async function recoverFromBackground(){
+ if(!joined||!match)return;
+
+ softDropHeld=false;
+
+ await syncServerClock();
+ await syncMatchTruth();
+ await syncOwnPlayerTruth();
+
+ if(!joined)return;
+
+ await loadPeers();
+ await syncPendingAttacks();
+
+ if(match?.phase==="COUNTDOWN"&&match.start_at&&currentPhase!=="COUNTDOWN"&&!game.started){
+   startMatch(Date.parse(match.start_at));
+   return;
+ }
+
+ if((match?.phase==="BATTLE"||currentPhase==="BATTLE")&&game?.started&&game.alive){
+   currentPhase="BATTLE";
+   await catchUpToNow(true);
+ }
+}
+
+document.addEventListener("visibilitychange",()=>{
+ if(document.visibilityState==="visible"){
+   recoverFromBackground();
+ }else{
+   softDropHeld=false;
+ }
+});
+
+window.addEventListener("focus",()=>recoverFromBackground());
+window.addEventListener("pageshow",()=>recoverFromBackground());
+
+// Periodically re-sync client/server clock drift while foreground.
+setInterval(()=>{ if(document.visibilityState==="visible")syncServerClock(); },30000);
+

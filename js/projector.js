@@ -1,5 +1,5 @@
 import {CONFIG} from "./config.js";
-import {supabase,getRoom} from "./supabase.js";
+import {supabase,getRoom,serverNow,syncServerClock} from "./supabase.js";
 const $=s=>document.querySelector(s);
 const players=new Map();let match=null,startAt=0,attackUnlockAt=0,phase="LOBBY";
 function render(){
@@ -23,6 +23,7 @@ async function loadPlayers(){
  players.clear();for(const p of data||[])players.set(p.id,{id:p.id,name:p.player_name,ready:p.ready,alive:p.alive,score:p.score||0});render();
 }
 async function init(){
+ await syncServerClock();
  match=await getRoom();phase=match.phase;if(match.start_at){startAt=Date.parse(match.start_at);attackUnlockAt=startAt+CONFIG.OPENING_ATTACK_LOCK_MS;}await loadPlayers();
  supabase.channel(`projector-${match.id}`)
   .on("postgres_changes",{event:"*",schema:"public",table:"players",filter:`match_id=eq.${match.id}`},payload=>{
@@ -41,7 +42,7 @@ async function init(){
 }
 function loop(){
  if(startAt&&(phase==="COUNTDOWN"||phase==="BATTLE")){
-  const now=Date.now();
+  const now=serverNow();
   if(now<startAt){$("#heroText").textContent=Math.max(1,Math.ceil((startAt-now)/1000));$("#timerText").textContent="GET READY";}
   else{
    phase="BATTLE";const elapsed=now-startAt;const level=1+Math.floor(elapsed/CONFIG.LEVEL_INTERVAL_MS);
@@ -52,3 +53,4 @@ function loop(){
  requestAnimationFrame(loop);
 }
 render();init();loop();
+setInterval(()=>syncServerClock(),30000);

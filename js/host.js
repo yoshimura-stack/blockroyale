@@ -1,4 +1,4 @@
-import {supabase,getRoom} from "./supabase.js";
+import {supabase,getRoom,serverNow,syncServerClock} from "./supabase.js";
 const $=s=>document.querySelector(s);
 const players=new Map();let match=null,phase="LOBBY",finishingMatch=false;
 
@@ -73,7 +73,7 @@ async function loadPlayers(){
 }
 async function init(){
  try{
-   match=await getRoom();phase=match.phase;await loadPlayers();
+   await syncServerClock();match=await getRoom();phase=match.phase;await loadPlayers();
    supabase.channel(`host-${match.id}`)
     .on("postgres_changes",{event:"*",schema:"public",table:"players",filter:`match_id=eq.${match.id}`},payload=>{
       const p=payload.new||payload.old;if(!p)return;
@@ -108,10 +108,12 @@ $("#startBtn").onclick=async()=>{
  finishingMatch=false;
  if(!match)return;
  if(![...players.values()].some(p=>p.ready))return alert("READYプレイヤーがまだいません。");
- const startAt=new Date(Date.now()+4000).toISOString();
+ await syncServerClock();
+ const startAtMs=serverNow()+4000;
+ const startAt=new Date(startAtMs).toISOString();
  await supabase.from("players").update({alive:true,score:0,rank:null,max_combo:0,max_attack:0}).eq("match_id",match.id);
  await supabase.from("matches").update({phase:"COUNTDOWN",start_at:startAt,level:1}).eq("id",match.id);
- setTimeout(()=>supabase.from("matches").update({phase:"BATTLE"}).eq("id",match.id),4000);
+ setTimeout(()=>supabase.from("matches").update({phase:"BATTLE"}).eq("id",match.id),Math.max(0,startAtMs-serverNow()));
 };
 $("#nextBtn").onclick=async()=>{
  finishingMatch=false;
