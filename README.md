@@ -139,3 +139,9 @@ Three.jsによる本格3Dレンダラーは、まずこの2Dロジックを安�
 ## V0.9b Player Syntax Fix
 - player.js の READY ボタンを止めていた SyntaxError: Unexpected token ')' を修正
 - Supabase Legacy anon/public key 接続とGRANT前提は維持
+
+## V0.9c READY / Syntax Hard Fix
+- callbacks() を丸ごと再構築し、V0.9系の文字列置換由来の構文崩れを除去
+- READY処理も丸ごと再構築
+- READY中は CONNECTING、成功後 READY、失敗時 ERROR を表示
+- jsフォルダ内の全JavaScriptを Node --check で構文検証

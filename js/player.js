@@ -128,20 +128,49 @@ function callbacks(){
  return {
   onNext:t=>renderer.drawNext(t),
   onScore:s=>$("#score").textContent=s.toLocaleString(),
-  onStats:s=>{ $("#score").textContent=s.score.toLocaleString();$("#level").textContent=s.level;$("#maxCombo").textContent=s.maxCombo;$("#maxAttack").textContent=s.maxAttack;updateIncoming();sendState();},
+  onStats:s=>{
+    $("#score").textContent=s.score.toLocaleString();
+    $("#level").textContent=s.level;
+    $("#maxCombo").textContent=s.maxCombo;
+    $("#maxAttack").textContent=s.maxAttack;
+    updateIncoming();
+    sendState();
+  },
   onClear:({cleared,combo,attack})=>{
     const labels={1:"SINGLE",2:"DOUBLE",3:"TRIPLE",4:"4-LINE"};
     let text=labels[cleared]||"CLEAR";
     if(combo>=2)text+=`<br><span>${combo} COMBO</span>`;
     if(attack>0)text+=`<br><span>ATTACK ×${attack}</span>`;
-    fx(text); $("#comboText").textContent=combo>=2?`🔥 ${combo} COMBO`:"—";
+    fx(text);
+    $("#comboText").textContent=combo>=2?`🔥 ${combo} COMBO`:"—";
   },
-  onAttack:amount=>{ if(Date.now()<attackUnlockAt){fx("ATTACK LOCKED");return;} game.maxAttack=Math.max(game.maxAttack,amount); requestAttack(amount); },
-  onIncoming:()=>{updateIncoming();fx("⚠ INCOMING");},
+  onAttack:amount=>{
+    if(Date.now()<attackUnlockAt){
+      fx("ATTACK LOCKED");
+      return;
+    }
+    game.maxAttack=Math.max(game.maxAttack,amount);
+    requestAttack(amount);
+  },
+  onIncoming:()=>{
+    updateIncoming();
+    fx("⚠ INCOMING");
+  },
   onDefense:({perfect})=>fx(perfect?"PERFECT DEFENSE!":"BLOCK!"),
-  onLastChance:()=>{fx("LAST CHANCE<br><span>ONE MOVE</span>");$("#statusText").textContent="LAST CHANCE";},
-  onSurvive:()=>{fx("SURVIVE!");$("#statusText").textContent="BATTLE";},
-  onKO:({reason,score})=>{fx("K.O.");$("#statusText").textContent="K.O.";markKO(reason,score);sendState();}sendState();}
+  onLastChance:()=>{
+    fx("LAST CHANCE<br><span>ONE MOVE</span>");
+    $("#statusText").textContent="LAST CHANCE";
+  },
+  onSurvive:()=>{
+    fx("SURVIVE!");
+    $("#statusText").textContent="BATTLE";
+  },
+  onKO:({reason,score})=>{
+    fx("K.O.");
+    $("#statusText").textContent="K.O.";
+    markKO(reason,score);
+    sendState();
+  }
  };
 }
 function newGame(){game=new Tetris(callbacks());renderer.draw(game);updateIncoming();lastAttackTargetId=null;lastAttackerId=null;$("#targetEvent").textContent="NO TARGET";$("#attackerEvent").textContent="NO ATTACKER";renderPeerHUD()}
@@ -149,16 +178,24 @@ newGame();
 
 $("#joinBtn").onclick=async()=>{
  name=$("#nameInput").value.trim()||`PLAYER-${id.slice(0,4).toUpperCase()}`;
- $("#playerNameLabel").textContent=name;$("#overlay").classList.add("hidden");$("#statusText").textContent="READY";
+ $("#playerNameLabel").textContent=name;
+ $("#statusText").textContent="CONNECTING";
+
  try{
-   if(!onlineReady)await subscribeOnline();
-   else{await upsertPlayerRow();await upsertStateRow();}
+   if(!onlineReady){
+     await subscribeOnline();
+   }else{
+     await upsertPlayerRow();
+     await upsertStateRow();
+   }
+   $("#overlay").classList.add("hidden");
+   $("#statusText").textContent="READY";
  }catch(err){
-   console.error(err);alert("Supabase接続に失敗しました。");
+   console.error("READY / Supabase error:",err);
+   $("#statusText").textContent="ERROR";
+   alert(`Supabase接続に失敗しました。\n${err?.message||err}`);
  }
 };
-
-
 function showCountdown(value, go=false){
  const overlay=$("#countdownOverlay");
  const num=$("#countdownNumber");
