@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BLOCK ROYALE — PRACTICE</title>
+  <link rel="stylesheet" href="./css/app.css">
+</head>
+<body class="practice-page">
+  <header class="practice-header">
+    <div>
+      <div class="eyebrow">BLOCK ROYALE / SOLO TRAINING</div>
+      <strong>PRACTICE MODE</strong>
+    </div>
+    <div class="practice-header-actions">
+      <button id="restartBtn" class="btn practice-small-btn">練習を最初から</button>
+      <a class="btn practice-small-btn" href="./index.html">トップページへ戻る</a>
+    </div>
+  </header>
+
+  <main class="practice-layout">
+    <aside class="practice-side glass">
+      <section class="practice-guide">
+        <div class="section-heading">操作練習</div>
+        <div class="practice-control-row"><kbd>A</kbd><kbd>D</kbd><span>左右移動</span></div>
+        <div class="practice-control-row"><kbd>←</kbd><kbd>→</kbd><span>回転</span></div>
+        <div class="practice-control-row"><kbd>S</kbd><kbd>↓</kbd><span>高速落下</span></div>
+        <p class="practice-note">本番とまったく同じ操作です。マウス操作はありません。</p>
+      </section>
+
+      <section class="practice-score-panel">
+        <div class="section-heading">スコアアタック</div>
+        <div class="practice-score-big" id="practiceScore">0</div>
+        <div class="practice-score-label">SCORE</div>
+        <div class="practice-stats-grid">
+          <div><span>LEVEL</span><strong id="practiceLevel">1</strong></div>
+          <div><span>LINES</span><strong id="practiceLines">0</strong></div>
+          <div><span>MAX COMBO</span><strong id="practiceCombo">0</strong></div>
+          <div><span>BEST</span><strong id="practiceBest">0</strong></div>
+        </div>
+      </section>
+    </aside>
+
+    <section class="practice-board-wrap">
+      <div class="practice-board-shell">
+        <canvas id="practiceBoard" width="400" height="800"></canvas>
+
+        <div id="practiceOverlay" class="practice-overlay">
+          <div class="practice-start-card">
+            <div class="eyebrow">SOLO TRAINING</div>
+            <h1>操作に慣れよう</h1>
+            <p>A / Dで移動、← / →で回転、S / ↓で高速落下。</p>
+            <button id="startPracticeBtn" class="btn primary">練習スタート</button>
+          </div>
+        </div>
+
+        <div id="practiceCountdown" class="practice-countdown hidden">3</div>
+
+        <div id="practiceKo" class="practice-overlay hidden">
+          <div class="practice-start-card">
+            <div class="eyebrow">PRACTICE RESULT</div>
+            <h1>K.O.</h1>
+            <div class="practice-result-score" id="practiceResultScore">SCORE 0</div>
+            <div class="practice-result-best" id="practiceResultBest">BEST 0</div>
+            <p class="practice-result-note">更新は不要です。そのまま再プレイできます。</p>
+            <div class="practice-result-actions">
+              <button id="retryPracticeBtn" class="btn primary">もう一度練習</button>
+              <a class="btn" href="./index.html">トップページへ戻る</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="practice-side glass practice-right">
+      <section>
+        <div class="section-heading">次のミノ</div>
+        <div class="practice-next-box">
+          <canvas id="practiceNext" width="180" height="140"></canvas>
+        </div>
+      </section>
+
+      <section class="practice-mission">
+        <div class="section-heading">練習ポイント</div>
+        <div class="practice-tip">
+          <span>01</span>
+          <div><strong>横移動に慣れる</strong><small>A / Dを迷わず押せるように。</small></div>
+        </div>
+        <div class="practice-tip">
+          <span>02</span>
+          <div><strong>回転に慣れる</strong><small>← / →で左右どちらにも回せます。</small></div>
+        </div>
+        <div class="practice-tip">
+          <span>03</span>
+          <div><strong>高速落下を使う</strong><small>S / ↓は一気に着地せず、落下速度が上がります。</small></div>
+        </div>
+        <div class="practice-tip">
+          <span>04</span>
+          <div><strong>スコアを伸ばす</strong><small>ラインをまとめて消すほど高得点です。</small></div>
+        </div>
+      </section>
+
+      <div class="practice-status">
+        <span>STATUS</span>
+        <strong id="practiceStatus">READY</strong>
+      </div>
+    </aside>
+  </main>
+
+  <script type="module" src="./js/practice.js"></script>
+</body>
+</html>

@@ -320,3 +320,27 @@ V0.22で追加SQLはありません。
 
 複数攻撃がある場合は、最も先に着弾する古い攻撃を中央通知の優先対象とする。
 右上の受けている攻撃表示は従来どおり維持。
+
+## V0.25 PRACTICE MODE
+- トップページに `PRACTICE` ボタンを追加
+- `practice.html` / `js/practice.js` を追加
+- Supabase接続なしの完全ソロ練習
+- 本番PLAYERと同じTetris Engine / Renderer / 操作
+- A / D = 左右移動
+- ← / → = 回転
+- S / ↓ = 高速落下（ソフトドロップ）
+- SCORE / LEVEL / LINES / MAX COMBO表示
+- BEST SCOREはlocalStorage保存
+- 3,2,1,STARTカウントダウン
+- K.O.後に結果表示して即リトライ可能
+- 本番同様、1分ごとにLEVEL / 落下速度アップ
+- 練習モードでは攻撃・Garbage・Supabase通信なし
+- SQL追加なし
+
+## V0.26 PRACTICE UX POLISH
+- PRACTICE画面右上に「練習を最初から」「トップページへ戻る」を常設
+- K.O.結果画面に「もう一度練習」「トップページへ戻る」を両方表示
+- 「更新は不要です。そのまま再プレイできます。」を明記
+- 再プレイ時に古いゲーム/カウントダウン状態を完全破棄して新規開始
+- ブラウザ更新を要求しない初心者向け導線に統一
+- SQL追加なし

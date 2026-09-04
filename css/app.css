@@ -613,3 +613,80 @@ body{overflow:hidden}
 .leader-copy span{margin-top:5px;font-size:13px;font-weight:800;color:#f1c65b;letter-spacing:.05em}
 .leader-copy small{margin-top:8px;font-size:12px;color:var(--muted);font-weight:700}
 @media(max-width:900px){.leader-box{min-height:82px;padding:12px}.leader-crown{font-size:28px}.leader-copy strong{font-size:18px}}
+
+
+/* ===== V0.25 PRACTICE MODE ===== */
+.practice-home{border-color:rgba(240,198,106,.72)!important;color:var(--gold)!important}
+.practice-page{min-height:100vh;overflow:hidden;background:radial-gradient(circle at 50% 12%,rgba(35,45,70,.28),transparent 32%),#05070a;color:#f4f6fb}
+.practice-header{height:68px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.10);background:rgba(6,9,14,.96)}
+.practice-header strong{display:block;margin-top:3px;font-size:18px;letter-spacing:.05em}
+.practice-header-actions{display:flex;gap:8px}
+.practice-small-btn{padding:9px 14px!important;font-size:12px!important}
+.practice-layout{height:calc(100vh - 68px);width:min(1500px,100%);margin:0 auto;padding:10px 14px 12px;display:grid;grid-template-columns:minmax(245px,.86fr) minmax(310px,.92fr) minmax(245px,.86fr);gap:12px;box-sizing:border-box}
+.practice-side{min-height:0;overflow:hidden;padding:14px;border-radius:20px;display:flex;flex-direction:column;gap:16px}
+.practice-control-row{display:grid;grid-template-columns:34px 34px 1fr;align-items:center;gap:6px;margin:8px 0}
+.practice-control-row kbd{min-width:30px;padding:6px 4px;text-align:center;border-radius:7px;border:1px solid rgba(255,255,255,.18);background:#1a2230;box-shadow:inset 0 1px rgba(255,255,255,.08);font-weight:900}
+.practice-control-row span{margin-left:5px;font-size:12px;color:#d6dbe5}
+.practice-note{margin:10px 0 0;font-size:10px;line-height:1.7;color:var(--muted)}
+.practice-score-panel{margin-top:auto;padding:14px;border:1px solid rgba(255,255,255,.08);border-radius:16px;background:rgba(3,6,10,.5)}
+.practice-score-big{margin-top:8px;font-size:clamp(44px,5vw,72px);line-height:1;font-weight:1000;letter-spacing:-.05em}
+.practice-score-label{margin-top:4px;font-size:10px;letter-spacing:.16em;color:var(--gold)}
+.practice-stats-grid{margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.practice-stats-grid>div{padding:10px;border-radius:10px;background:#080c12;border:1px solid rgba(255,255,255,.07)}
+.practice-stats-grid span{display:block;font-size:8px;color:var(--muted);letter-spacing:.08em}
+.practice-stats-grid strong{display:block;margin-top:4px;font-size:18px}
+.practice-board-wrap{min-width:0;min-height:0;height:100%;display:flex;align-items:center;justify-content:center}
+.practice-board-shell{position:relative;height:100%;max-height:100%;aspect-ratio:1/2;border:1px solid rgba(240,198,106,.43);border-radius:18px;overflow:hidden;background:#05070a;box-shadow:0 30px 90px rgba(0,0,0,.45)}
+#practiceBoard{display:block;width:100%;height:100%}
+.practice-overlay{position:absolute;inset:0;z-index:20;display:grid;place-items:center;padding:16px;background:rgba(3,5,9,.82);backdrop-filter:blur(5px)}
+.practice-overlay.hidden{display:none}
+.practice-start-card{width:min(88%,350px);padding:24px 22px;border-radius:20px;text-align:center;background:rgba(14,18,25,.96);border:1px solid rgba(255,255,255,.13);box-shadow:0 25px 80px rgba(0,0,0,.6)}
+.practice-start-card h1{margin:10px 0 8px;font-size:34px}
+.practice-start-card p{margin:0 0 18px;font-size:11px;line-height:1.7;color:var(--muted)}
+.practice-countdown{position:absolute;inset:0;z-index:30;display:grid;place-items:center;font-size:clamp(78px,12vw,140px);font-weight:1000;letter-spacing:-.06em;background:rgba(2,4,7,.58);text-shadow:0 0 60px rgba(240,198,106,.25)}
+.practice-countdown.hidden{display:none}
+.practice-result-score{margin-top:14px;font-size:24px;font-weight:950}
+.practice-result-best{margin:6px 0 18px;font-size:14px;color:var(--gold);font-weight:900}
+.practice-next-box{height:150px;display:grid;place-items:center;border-radius:14px;overflow:hidden;background:#070a0f;border:1px solid rgba(255,255,255,.07)}
+#practiceNext{max-width:100%;max-height:100%}
+.practice-mission{display:flex;flex-direction:column;gap:8px}
+.practice-tip{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:start;padding:10px;border-radius:12px;background:#080c12;border:1px solid rgba(255,255,255,.07)}
+.practice-tip>span{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:rgba(240,198,106,.13);color:var(--gold);font-size:10px;font-weight:950}
+.practice-tip strong{display:block;font-size:12px}
+.practice-tip small{display:block;margin-top:3px;color:var(--muted);font-size:9px;line-height:1.5}
+.practice-status{margin-top:auto;padding:12px 14px;border-radius:12px;background:#080c12;display:flex;align-items:center;justify-content:space-between}
+.practice-status span{font-size:9px;color:var(--muted)}
+.practice-status strong{color:var(--gold);font-size:13px}
+
+@media(max-width:1100px) and (min-width:760px){
+  .practice-layout{grid-template-columns:minmax(190px,.72fr) minmax(260px,.88fr) minmax(190px,.72fr);gap:8px;padding:8px}
+  .practice-side{padding:10px;gap:10px}.practice-note{display:none}.practice-next-box{height:110px}
+  .practice-tip{padding:7px;grid-template-columns:28px 1fr}.practice-tip>span{width:24px;height:24px}.practice-tip small{font-size:8px}
+  .practice-control-row{grid-template-columns:28px 28px 1fr}.practice-control-row kbd{min-width:24px;padding:4px 2px}
+}
+@media(max-width:759px){
+  .practice-page{overflow:auto}.practice-header{height:auto;min-height:68px;padding:10px 12px}.practice-header-actions{flex-direction:column}
+  .practice-layout{height:auto;grid-template-columns:1fr;grid-template-areas:"board" "left" "right"}
+  .practice-board-wrap{grid-area:board;height:auto}.practice-board-shell{width:min(90vw,390px);height:auto;aspect-ratio:1/2}
+  .practice-side{height:auto;overflow:visible}.practice-layout>.practice-side:first-child{grid-area:left}.practice-right{grid-area:right}
+}
+
+
+/* ===== V0.26 PRACTICE UX POLISH ===== */
+.practice-result-actions{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin-top:14px;
+}
+.practice-result-actions .btn{
+  width:100%;
+  justify-content:center;
+  box-sizing:border-box;
+}
+.practice-result-note{
+  margin:8px 0 0;
+  font-size:9px;
+  line-height:1.5;
+  color:var(--muted);
+}
