@@ -690,3 +690,35 @@ body{overflow:hidden}
   line-height:1.5;
   color:var(--muted);
 }
+
+
+/* ===== V0.27 BOARD EDGE CLIP FIX ===== */
+
+/* The game board itself must stay perfectly rectangular.
+   Rounded corners were clipping blocks in the bottom-left / bottom-right cells. */
+.board-frame,
+.practice-board-shell{
+  border-radius:0 !important;
+  overflow:visible !important;
+}
+
+/* Canvas itself must never be clipped or rounded. */
+#boardCanvas,
+#practiceBoard{
+  border-radius:0 !important;
+  clip-path:none !important;
+}
+
+/* Keep a subtle outer frame without eating into playable cells. */
+.board-frame,
+.practice-board-shell{
+  box-shadow:
+    0 0 0 1px rgba(240,198,106,.42),
+    0 30px 90px rgba(0,0,0,.45);
+}
+
+/* Any parent wrapper around the board must also avoid clipping it. */
+.board-wrap,
+.practice-board-wrap{
+  overflow:visible !important;
+}
