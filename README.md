@@ -364,3 +364,9 @@ V0.22で追加SQLはありません。
 - TOP / PLAYER / PRACTICE / PROJECTOR / HOSTで共通トンマナ
 - Tetris Effect等の固有表現を複製せず、「没入型・音と光に反応する抽象空間」という方向性を独自実装
 - SQL追加なし
+
+## V0.29 QUANTUM ARENA / VISUAL PHASE 2
+- PLAYER全体を大胆に再設計。中央盤面を浮遊エネルギーモノリス化
+- 左右をホログラムHUD化、背景の星/グリッド/軌道を強化
+- TOP/PRACTICE/PROJECTORも同一世界観へ
+- ゲームロジック/Supabase/SQLは変更なし。SQL追加なし

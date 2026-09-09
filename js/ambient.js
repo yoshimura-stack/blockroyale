@@ -9,8 +9,8 @@ const ctx = canvas.getContext("2d", {alpha:true});
 let w=0,h=0,dpr=1;
 let stars=[];
 let pulses=[];
-let intensity=0.22;
-let targetIntensity=0.22;
+let intensity=0.46;
+let targetIntensity=0.46;
 let hueShift=0;
 let last=performance.now();
 
@@ -68,7 +68,7 @@ function drawNebula(t){
 function drawGrid(t){
   const horizon=h*.56;
   ctx.save();
-  ctx.globalAlpha=.07+intensity*.035;
+  ctx.globalAlpha=.14+intensity*.065;
   ctx.strokeStyle="rgba(108,196,255,.9)";
   ctx.lineWidth=.7;
 
@@ -97,7 +97,7 @@ function drawStars(dt){
     s.y += dt*.006*s.drift*s.z;
     s.x += Math.sin((s.y+s.x)*.004)*dt*.00045*s.z;
     if(s.y>h+4){s.y=-4;s.x=Math.random()*w}
-    const a=.16+.5*s.z;
+    const a=.27+.60*s.z;
     ctx.fillStyle=`rgba(190,225,255,${a})`;
     ctx.beginPath();
     ctx.arc(s.x,s.y,s.r*s.z,0,Math.PI*2);
@@ -110,7 +110,7 @@ function drawOrbits(t){
   ctx.save();
   ctx.translate(w*.5,h*.43);
   ctx.rotate(Math.sin(t*.00007)*.08);
-  ctx.globalAlpha=.055+intensity*.035;
+  ctx.globalAlpha=.12+intensity*.06;
   ctx.strokeStyle="rgba(230,198,108,.9)";
   ctx.lineWidth=1;
   for(let i=0;i<3;i++){
@@ -147,7 +147,7 @@ function drawPulses(dt){
 function frame(now){
   const dt=Math.min(40,now-last); last=now;
   intensity += (targetIntensity-intensity)*.035;
-  targetIntensity += (.22-targetIntensity)*.012;
+  targetIntensity += (.46-targetIntensity)*.012;
 
   ctx.clearRect(0,0,w,h);
   drawNebula(now);
