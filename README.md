@@ -380,3 +380,10 @@ V0.22で追加SQLはありません。
 - 高さが低い画面ではpadding / NEXT / card / textを段階的に圧縮
 - PRACTICEも同じviewport-fit方針に修正
 - Supabase / SQL / ゲームロジック変更なし
+
+## v0.31 TRUE VIEWPORT LAYOUT FIX
+- PLAYERの下端クリッピングを構造レベルで修正。
+- player-shellをブラウザ実表示高(100dvh)の2行Grid（TOPBAR / GAME）に変更。
+- game-layoutの二重100vh計算を廃止し、TOPBARを除いた残り高のみ使用。
+- V0.30の誤ったcenter-panel対象を、実DOMのboard-wrapへ補正。
+- QUANTUM ARENAの見た目・3カラム構成・20段ボードは維持。
