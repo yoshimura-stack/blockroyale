@@ -45,12 +45,13 @@ function makeGame(){
     },
     onNext:type=>renderer.drawNext(type),
     onScore:()=>updateStats(game.stats()),
-    onClear:()=>updateStats(game.stats()),
+    onClear:({cleared=1}={})=>{updateStats(game.stats());window.BR_VISUAL_PULSE?.("clear",cleared);},
     onStats:stats=>updateStats(stats),
     onKO:({score})=>{
       running=false;
       softDropHeld=false;
       setStatus("K.O.");
+      window.BR_VISUAL_PULSE?.("incoming",4);
       const best=setBest(score);
       $("#practiceResultScore").textContent=`SCORE ${Number(score||0).toLocaleString()}`;
       $("#practiceResultBest").textContent=`BEST ${best.toLocaleString()}`;
@@ -115,6 +116,7 @@ function startPractice(){
       game.start(startAt);
       running=true;
       setStatus("PLAY");
+      window.BR_VISUAL_PULSE?.("clear",2);
       return;
     }
     clearInterval(countdownTimer);

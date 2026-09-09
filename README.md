@@ -351,3 +351,16 @@ V0.22で追加SQLはありません。
 - 10×20のプレイ領域は完全な長方形に固定
 - canvas / board frame / wrapper の角丸・clipを解除
 - ゲームロジック / Supabase / SQL変更なし
+
+## V0.28 NEON COSMOS / VISUAL PHASE 1
+- ゲームロジック・Supabase・SQLを触らず、世界観を全面刷新
+- 近未来の宇宙 / デジタル空間をモチーフにした独自ビジュアル
+- 外部ライブラリなしの軽量Ambient Canvasを追加
+- 星屑 / ネビュラ / 遠景グリッド / 軌道リング / エネルギー波紋
+- PLAYERのライン消去・攻撃・被弾・着弾・WINNERで背景が反応
+- PRACTICEもライン消去 / K.O.で背景反応
+- 盤面をホログラム状のエネルギーチャンバーへ変更
+- 左右HUDを薄いSFガラスUIへ変更
+- TOP / PLAYER / PRACTICE / PROJECTOR / HOSTで共通トンマナ
+- Tetris Effect等の固有表現を複製せず、「没入型・音と光に反応する抽象空間」という方向性を独自実装
+- SQL追加なし

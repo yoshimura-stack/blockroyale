@@ -722,3 +722,266 @@ body{overflow:hidden}
 .practice-board-wrap{
   overflow:visible !important;
 }
+
+
+/* ===== V0.28 NEON COSMOS / VISUAL PHASE 1 ===== */
+:root{
+  --void:#03050a;
+  --glass:rgba(10,15,25,.66);
+  --glass-strong:rgba(9,14,23,.82);
+  --line:rgba(153,200,255,.15);
+  --cyan:#74ddff;
+  --violet:#9c7bff;
+  --gold:#f0c66a;
+}
+
+body{
+  background:
+    radial-gradient(circle at 50% 20%,rgba(54,45,110,.18),transparent 34%),
+    radial-gradient(circle at 14% 34%,rgba(38,126,164,.12),transparent 30%),
+    linear-gradient(180deg,#050812 0%,#03050a 58%,#020306 100%) !important;
+}
+
+.ambient-canvas{
+  position:fixed;
+  inset:0;
+  z-index:-2;
+  width:100%;
+  height:100%;
+  pointer-events:none;
+}
+
+body::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.018),transparent 22%,rgba(0,0,0,.12)),
+    repeating-linear-gradient(180deg,rgba(255,255,255,.012) 0 1px,transparent 1px 4px);
+  mix-blend-mode:screen;
+  opacity:.42;
+}
+
+/* cinematic glass */
+.glass,
+.side-panel,
+.admin-card,
+.projector-hero,
+.leaderboard,
+.practice-side{
+  background:
+    linear-gradient(145deg,rgba(17,23,38,.76),rgba(6,10,18,.62)) !important;
+  border-color:rgba(151,198,255,.16) !important;
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.055),
+    0 22px 70px rgba(0,0,0,.38),
+    0 0 36px rgba(79,145,255,.035) !important;
+  backdrop-filter:blur(18px) saturate(125%);
+}
+
+/* holographic headers */
+.topbar,
+.practice-header,
+.projector-header{
+  background:linear-gradient(180deg,rgba(6,10,18,.84),rgba(5,8,14,.58)) !important;
+  border-bottom:1px solid rgba(122,187,255,.14) !important;
+  box-shadow:0 12px 40px rgba(0,0,0,.26);
+  backdrop-filter:blur(16px);
+}
+.eyebrow{
+  color:#f4ca70 !important;
+  text-shadow:0 0 18px rgba(240,198,106,.22);
+}
+
+/* main board = floating energy chamber */
+.board-frame,
+.practice-board-shell{
+  position:relative;
+  background:
+    linear-gradient(180deg,rgba(3,7,14,.90),rgba(2,5,10,.96)) !important;
+  border:0 !important;
+  box-shadow:
+    0 0 0 1px rgba(238,201,111,.42),
+    0 0 34px rgba(97,182,255,.10),
+    0 0 90px rgba(87,78,190,.08),
+    inset 0 0 55px rgba(67,120,184,.045),
+    0 34px 100px rgba(0,0,0,.48) !important;
+}
+.board-frame::before,
+.practice-board-shell::before{
+  content:"";
+  position:absolute;
+  inset:-1px;
+  pointer-events:none;
+  background:
+    linear-gradient(90deg,transparent,rgba(103,215,255,.20),transparent) top/100% 1px no-repeat,
+    linear-gradient(180deg,rgba(240,198,106,.25),transparent 14%,transparent 86%,rgba(103,215,255,.12));
+  z-index:3;
+}
+.board-frame::after,
+.practice-board-shell::after{
+  content:"";
+  position:absolute;
+  left:9%;
+  right:9%;
+  bottom:-18px;
+  height:30px;
+  border-radius:50%;
+  pointer-events:none;
+  background:radial-gradient(ellipse,rgba(88,181,255,.18),transparent 70%);
+  filter:blur(8px);
+}
+
+/* slimmer sci-fi side cards */
+.mini-card,
+.large-mini-card,
+.quick-stat,
+.next-box,
+.compact-incoming,
+.status-pill,
+.practice-tip,
+.practice-score-panel,
+.practice-next-box,
+.practice-status{
+  background:
+    linear-gradient(145deg,rgba(8,13,22,.76),rgba(3,7,13,.62)) !important;
+  border-color:rgba(129,191,255,.12) !important;
+  box-shadow:inset 0 1px rgba(255,255,255,.035);
+}
+.large-mini-card:hover{
+  border-color:rgba(128,204,255,.28) !important;
+}
+.panel-title,
+.section-heading{
+  color:rgba(208,225,245,.72) !important;
+}
+.mini-label{
+  color:#f0c66a !important;
+}
+
+/* HUD numerics */
+.top-stats b,
+.quick-stat b,
+.practice-score-big,
+.alive-big b{
+  text-shadow:
+    0 0 18px rgba(115,216,255,.12),
+    0 0 2px rgba(255,255,255,.2);
+}
+
+/* landing becomes a portal rather than a flat card */
+.landing{
+  display:grid;
+  place-items:center;
+  min-height:100vh;
+  overflow:hidden;
+}
+.landing-card{
+  position:relative;
+  overflow:hidden;
+  border-color:rgba(132,191,255,.19) !important;
+  box-shadow:
+    0 40px 130px rgba(0,0,0,.58),
+    0 0 90px rgba(79,130,255,.08) !important;
+}
+.landing-card::before{
+  content:"";
+  position:absolute;
+  width:420px;
+  height:420px;
+  left:50%;
+  top:45%;
+  transform:translate(-50%,-50%);
+  border:1px solid rgba(111,202,255,.10);
+  border-radius:50%;
+  box-shadow:
+    0 0 0 54px rgba(136,108,255,.025),
+    0 0 0 108px rgba(84,175,255,.018);
+  pointer-events:none;
+}
+.landing-card>*{position:relative;z-index:2}
+.landing h1{
+  text-shadow:0 0 55px rgba(120,158,255,.08);
+}
+.landing h1 span{
+  background:linear-gradient(180deg,#ffe7a0,#e9ae45);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+  filter:drop-shadow(0 0 24px rgba(240,198,106,.14));
+}
+.btn{
+  transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease,background .16s ease;
+}
+.btn:hover{
+  transform:translateY(-2px);
+  border-color:rgba(132,204,255,.34);
+  box-shadow:0 12px 26px rgba(0,0,0,.24),0 0 18px rgba(87,168,255,.08);
+}
+.btn.primary{
+  box-shadow:0 10px 28px rgba(240,198,106,.11);
+}
+
+/* combat overlays feel broadcast-grade */
+.combat-alert{
+  background:
+    radial-gradient(circle at 50% 0%,rgba(70,125,190,.12),transparent 42%),
+    rgba(5,9,16,.94) !important;
+  backdrop-filter:blur(18px) saturate(130%);
+}
+.combat-alert.outgoing{
+  box-shadow:
+    0 30px 100px rgba(0,0,0,.72),
+    0 0 75px rgba(240,198,106,.18) !important;
+}
+.combat-alert.incoming,
+.combat-alert.landing{
+  box-shadow:
+    0 30px 100px rgba(0,0,0,.72),
+    0 0 85px rgba(255,71,112,.20) !important;
+}
+
+/* winner = luminous event moment */
+.result-overlay{
+  background:
+    radial-gradient(circle at 50% 36%,rgba(240,198,106,.22),transparent 30%),
+    radial-gradient(circle at 50% 50%,rgba(83,118,255,.12),transparent 54%),
+    rgba(2,4,8,.91) !important;
+}
+.result-card{
+  background:
+    linear-gradient(160deg,rgba(17,23,37,.96),rgba(5,9,16,.94)) !important;
+  box-shadow:
+    0 40px 120px rgba(0,0,0,.72),
+    0 0 100px rgba(240,198,106,.12) !important;
+}
+
+/* projector presentation */
+.projector-body{
+  background:
+    radial-gradient(circle at 50% 20%,rgba(68,70,145,.19),transparent 38%),
+    #03050a !important;
+}
+.projector-hero{
+  position:relative;
+  overflow:hidden;
+}
+.projector-hero::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(115deg,transparent 35%,rgba(121,209,255,.035),transparent 64%);
+}
+
+/* emergency/admin remains practical, just visually related */
+.visual-host .admin-card{
+  background:rgba(8,12,20,.82) !important;
+}
+
+/* reduced-motion keeps the atmosphere without animation overload */
+@media (prefers-reduced-motion:reduce){
+  .btn{transition:none}
+}

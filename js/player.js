@@ -215,6 +215,7 @@ function handleMatchResult(){
 
  hideCountdown();
  $("#battleToast").classList.add("hidden");
+ visualPulse("winner",5);
  showResultOverlay();
 }
 async function syncOwnPlayerTruth(){
@@ -605,6 +606,10 @@ function showBattleToast(kind,playerName,amount){
    toast.classList.remove("show","outgoing","incoming");
  },1650);
 }
+function visualPulse(kind,power=1){
+ window.dispatchEvent(new CustomEvent("br:visual",{detail:{kind,power}}));
+}
+
 function callbacks(){
  return {
   clock:()=>serverNow(),
@@ -625,6 +630,7 @@ function callbacks(){
     if(combo>=2)text+=`<br><span>${combo} コンボ</span>`;
     if(attack>0)text+=`<br><span>攻撃 ${attack}列</span>`;
     fx(text);
+    visualPulse("clear",Math.max(1,cleared+(combo>=2?1:0)));
     $("#comboText").textContent=combo>=2?`🔥 ${combo} コンボ`:"—";
   },
   onAttack:amount=>{
@@ -633,15 +639,18 @@ function callbacks(){
       return;
     }
     game.maxAttack=Math.max(game.maxAttack,amount);
+    visualPulse("attack",Math.max(1,amount));
     requestAttack(amount);
   },
   onIncoming:packets=>{
     updateIncoming();
     showIncomingCountdown(packets);
+    visualPulse("incoming",Math.max(1,packets?.[0]?.amount||1));
   },
   onGarbageLand:({amount,attackId})=>{
     const attackerName=attackSourceById.get(attackId)||"プレイヤー";
     showCombatAlert("landing",attackerName,amount,0);
+    visualPulse("incoming",Math.max(2,amount+1));
     showBattleToast("landing",attackerName,amount);
     resolveAttackPersistence(attackId,"LANDED");
     incomingTurnNotice.delete(attackId);

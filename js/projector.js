@@ -19,6 +19,7 @@ async function renderResult(){
    || [...arr].sort((a,b)=>(b.score||0)-(a.score||0))[0]
    || null;
 
+ window.BR_VISUAL_PULSE?.("winner",6);
  $("#phase").textContent="RESULT";
  $("#aliveCount").textContent=winner?1:0;
  $("#heroText").textContent=winner?`🏆 WINNER  ${winner.player_name}`:"試合終了";
