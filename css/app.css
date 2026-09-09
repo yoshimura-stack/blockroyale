@@ -1440,3 +1440,318 @@ body.visual-player{
     height:min(100%, calc((100vw - 420px) * 2)) !important;
   }
 }
+
+/* ===================================================================
+   V0.32 — CINEMATIC QUANTUM ARENA
+   Visual-only layer. Keeps V0.31 viewport/gameplay behavior unchanged.
+   =================================================================== */
+
+body.visual-player{
+  position:relative;
+  isolation:isolate;
+  background:#020711 !important;
+}
+
+/* cinematic arena reference texture — deliberately subdued so live HUD stays readable */
+body.visual-player::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:-5;
+  pointer-events:none;
+  background-image:
+    linear-gradient(180deg,rgba(2,6,15,.38) 0%,rgba(2,7,16,.08) 42%,rgba(1,5,12,.58) 100%),
+    url('../assets/arena-reference.png');
+  background-size:cover;
+  background-position:center 48%;
+  opacity:.56;
+  filter:saturate(1.12) contrast(1.06);
+  transform:scale(1.012);
+}
+
+/* hide the literal HUD details from the reference texture while preserving its arena lights */
+body.visual-player::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:-4;
+  pointer-events:none;
+  background:
+    radial-gradient(ellipse at 50% 43%,rgba(2,8,17,.07) 0 16%,rgba(2,8,17,.28) 36%,rgba(2,8,17,.52) 75%),
+    linear-gradient(90deg,rgba(2,8,17,.44) 0 27%,rgba(2,8,17,.13) 39% 61%,rgba(2,8,17,.44) 73% 100%),
+    linear-gradient(180deg,rgba(0,0,0,.26),transparent 24%,transparent 72%,rgba(0,0,0,.34));
+  backdrop-filter:blur(.7px);
+}
+
+.visual-player .player-shell{
+  position:relative;
+  z-index:2;
+  background:
+    radial-gradient(circle at 50% 38%,rgba(37,151,255,.06),transparent 30%),
+    linear-gradient(180deg,rgba(2,8,18,.10),rgba(2,7,15,.20));
+}
+
+/* stadium crown / halo */
+.visual-player .player-shell::before{
+  display:block !important;
+  content:"QUANTUM  BATTLE  FIELD" !important;
+  position:absolute !important;
+  z-index:1 !important;
+  left:50% !important;
+  top:3px !important;
+  transform:translateX(-50%) !important;
+  width:min(34vw,520px) !important;
+  height:20px !important;
+  padding:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  color:rgba(105,202,255,.68) !important;
+  font-size:8px !important;
+  line-height:20px !important;
+  font-weight:900 !important;
+  letter-spacing:.46em !important;
+  text-align:center !important;
+  opacity:1 !important;
+  pointer-events:none !important;
+}
+
+.visual-player .topbar{
+  margin:9px 18px 8px !important;
+  width:calc(100% - 36px) !important;
+  min-height:68px !important;
+  height:68px !important;
+  padding:0 24px !important;
+  border:1px solid rgba(75,192,255,.26) !important;
+  border-radius:17px !important;
+  background:linear-gradient(105deg,rgba(4,18,31,.78),rgba(9,13,31,.70)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.05),
+    0 15px 34px rgba(0,0,0,.30),
+    0 0 28px rgba(28,154,255,.05) !important;
+  backdrop-filter:blur(16px) saturate(1.25) !important;
+}
+
+.visual-player .topbar::before{
+  content:"";
+  position:absolute;
+  left:15%; right:15%; bottom:-1px; height:1px;
+  background:linear-gradient(90deg,transparent,#3fd2ff 30%,#f1c668 50%,#3fd2ff 70%,transparent);
+  opacity:.62;
+  box-shadow:0 0 13px rgba(61,208,255,.45);
+}
+
+.visual-player .topbar .eyebrow{
+  color:#f6cd72 !important;
+  text-shadow:0 0 18px rgba(244,196,83,.30);
+}
+
+.visual-player .game-layout{
+  position:relative;
+  z-index:3;
+  perspective:1500px;
+}
+
+/* floor perspective grid */
+.visual-player .game-layout::before{
+  content:"";
+  position:absolute;
+  z-index:-2;
+  pointer-events:none;
+  left:-4vw; right:-4vw; bottom:-10%; height:48%;
+  transform-origin:50% 100%;
+  transform:perspective(650px) rotateX(63deg) scaleX(1.16);
+  background-image:
+    linear-gradient(rgba(56,169,255,.17) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(56,169,255,.17) 1px,transparent 1px);
+  background-size:46px 46px;
+  mask-image:linear-gradient(to top,rgba(0,0,0,.88),transparent 82%);
+  opacity:.48;
+}
+
+/* central energy tunnel */
+.visual-player .game-layout::after{
+  content:"";
+  position:absolute;
+  z-index:-3;
+  pointer-events:none;
+  left:50%; top:5%;
+  width:min(49vw,770px); height:min(70vw,770px);
+  transform:translateX(-50%);
+  border-radius:50%;
+  border:1px solid rgba(83,177,255,.11);
+  box-shadow:
+    0 0 0 38px rgba(38,134,255,.022),
+    0 0 0 78px rgba(38,134,255,.018),
+    0 0 90px rgba(36,126,255,.14),
+    inset 0 0 90px rgba(47,154,255,.07);
+}
+
+.visual-player .side-panel{
+  position:relative;
+  border:1px solid rgba(65,194,255,.22) !important;
+  background:linear-gradient(150deg,rgba(5,27,42,.78),rgba(7,10,28,.77) 58%,rgba(16,9,37,.72)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.045),
+    inset 0 0 34px rgba(28,143,231,.035),
+    0 22px 55px rgba(0,0,0,.34),
+    0 0 30px rgba(34,165,255,.055) !important;
+  backdrop-filter:blur(18px) saturate(1.28) !important;
+}
+
+.visual-player .side-panel::before{
+  content:"";
+  position:absolute;
+  pointer-events:none;
+  inset:0;
+  border-radius:inherit;
+  padding:1px;
+  background:linear-gradient(135deg,rgba(79,220,255,.46),rgba(255,255,255,.02) 35%,rgba(238,188,74,.18) 73%,rgba(72,157,255,.33));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+  opacity:.54;
+}
+
+.visual-player .side-left{transform:perspective(1500px) rotateY(1.15deg); transform-origin:right center}
+.visual-player .side-right{transform:perspective(1500px) rotateY(-1.15deg); transform-origin:left center}
+
+.visual-player .quick-stat,
+.visual-player .mini-controls,
+.visual-player .next-box,
+.visual-player .leader-box,
+.visual-player .status-pill,
+.visual-player .large-mini-card{
+  background:linear-gradient(145deg,rgba(2,13,24,.77),rgba(4,8,19,.66)) !important;
+  border-color:rgba(94,190,255,.15) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.025),0 8px 18px rgba(0,0,0,.14);
+}
+
+.visual-player .panel-title,
+.visual-player .section-heading{
+  color:#8fdcff !important;
+  text-shadow:0 0 16px rgba(54,186,255,.22);
+}
+
+.visual-player .mini-label{
+  color:#f2c45d !important;
+  text-shadow:0 0 12px rgba(242,196,93,.18);
+}
+
+.visual-player .board-wrap{
+  position:relative;
+  isolation:isolate;
+}
+
+/* luminous pedestal behind the board */
+.visual-player .board-wrap::before{
+  content:"";
+  position:absolute;
+  z-index:-2;
+  left:50%; bottom:-6px;
+  width:135%; height:50px;
+  transform:translateX(-50%) perspective(380px) rotateX(67deg);
+  border:2px solid rgba(62,197,255,.55);
+  border-radius:50%;
+  background:radial-gradient(ellipse,rgba(21,117,214,.16),rgba(2,9,19,.65) 62%,transparent 68%);
+  box-shadow:
+    0 0 0 9px rgba(34,115,205,.08),
+    0 0 0 18px rgba(239,186,60,.055),
+    0 0 42px rgba(52,176,255,.40),
+    0 0 20px rgba(245,193,65,.20);
+}
+
+/* vertical stadium light tower */
+.visual-player .board-wrap::after{
+  content:"";
+  position:absolute;
+  z-index:-3;
+  left:50%; top:-7%;
+  transform:translateX(-50%);
+  width:72%; height:110%;
+  background:
+    linear-gradient(90deg,transparent,rgba(62,182,255,.055) 8%,transparent 14% 86%,rgba(62,182,255,.055) 92%,transparent),
+    radial-gradient(ellipse at 50% 20%,rgba(45,163,255,.11),transparent 42%);
+  filter:blur(.2px);
+}
+
+.visual-player .board-frame{
+  border:1px solid rgba(87,209,255,.68) !important;
+  border-radius:7px !important;
+  background:#02070c;
+  box-shadow:
+    0 0 0 1px rgba(8,29,49,.88),
+    -8px 0 22px rgba(44,179,255,.16),
+    8px 0 24px rgba(246,193,65,.10),
+    0 0 46px rgba(37,163,255,.22),
+    0 28px 70px rgba(0,0,0,.56) !important;
+}
+
+.visual-player .board-frame::before,
+.visual-player .board-frame::after{
+  content:"";
+  position:absolute;
+  z-index:25;
+  pointer-events:none;
+  top:8%; bottom:8%; width:3px;
+  border-radius:999px;
+}
+.visual-player .board-frame::before{
+  left:-1px;
+  background:linear-gradient(transparent,#43d8ff 15% 85%,transparent);
+  box-shadow:0 0 13px #28bfff,0 0 30px rgba(40,191,255,.45);
+}
+.visual-player .board-frame::after{
+  right:-1px;
+  background:linear-gradient(transparent,#f2c354 15% 85%,transparent);
+  box-shadow:0 0 13px #eab746,0 0 30px rgba(234,183,70,.38);
+}
+
+.visual-player #board{
+  background:
+    linear-gradient(rgba(72,164,222,.055) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(72,164,222,.055) 1px,transparent 1px),
+    linear-gradient(180deg,rgba(2,9,15,.94),rgba(1,4,8,.985)) !important;
+  background-size:10% 5%,10% 5%,auto !important;
+}
+
+.visual-player .overlay-card{
+  border-color:rgba(80,190,255,.28) !important;
+  background:linear-gradient(145deg,rgba(7,20,33,.92),rgba(5,8,16,.92)) !important;
+  box-shadow:0 25px 72px rgba(0,0,0,.58),0 0 34px rgba(55,175,255,.12),inset 0 1px 0 rgba(255,255,255,.05) !important;
+}
+
+.visual-player .btn.primary{
+  background:linear-gradient(135deg,#ffdf7f,#d6992a) !important;
+  box-shadow:0 9px 24px rgba(219,155,43,.23),inset 0 1px 0 rgba(255,255,255,.55);
+}
+
+.visual-player kbd{
+  border-color:rgba(109,190,236,.26) !important;
+  background:linear-gradient(#31404f,#18232f) !important;
+}
+
+/* keep V0.31 company-PC fit exactly intact */
+@media (max-height:820px){
+  .visual-player .topbar{
+    margin:4px 8px 4px !important;
+    width:calc(100% - 16px) !important;
+    min-height:46px !important;
+    height:46px !important;
+  }
+  .visual-player .player-shell::before{display:none !important}
+}
+
+@media (prefers-reduced-motion:no-preference){
+  body.visual-player::before{animation:arenaBreath 10s ease-in-out infinite alternate}
+  .visual-player .game-layout::after{animation:haloPulse 6s ease-in-out infinite alternate}
+}
+@keyframes arenaBreath{
+  from{filter:saturate(1.06) contrast(1.04) brightness(.96);transform:scale(1.012)}
+  to{filter:saturate(1.18) contrast(1.08) brightness(1.035);transform:scale(1.02)}
+}
+@keyframes haloPulse{
+  from{opacity:.62;transform:translateX(-50%) scale(.985)}
+  to{opacity:1;transform:translateX(-50%) scale(1.018)}
+}
