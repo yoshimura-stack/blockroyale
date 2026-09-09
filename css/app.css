@@ -1073,3 +1073,247 @@ body::after{
 
 @media(max-width:1100px){.visual-player .player-shell{gap:16px!important;padding-left:14px!important;padding-right:14px!important}.visual-player .center-panel::before{left:-8px}.visual-player .center-panel::after{right:-8px}}
 @media(max-width:760px){.visual-player .topbar{margin:5px 6px 0;width:calc(100% - 12px)}.visual-player .player-shell::before{display:none}}
+
+
+/* ===================================================================
+   V0.30 — QUANTUM ARENA VIEWPORT FIT
+   Fixes bottom clipping while preserving Visual Phase 2.
+   =================================================================== */
+
+/* Top chrome + app must fit inside the actual browser viewport. */
+.visual-player{
+  overflow:hidden !important;
+}
+.visual-player .topbar{
+  box-sizing:border-box;
+}
+.visual-player .player-shell{
+  height:calc(100vh - 88px) !important;
+  min-height:0 !important;
+  box-sizing:border-box;
+  overflow:hidden !important;
+  align-items:stretch !important;
+}
+
+/* The three main columns must never exceed available vertical space. */
+.visual-player .side-panel,
+.visual-player .center-panel{
+  min-height:0 !important;
+  height:100% !important;
+  max-height:100% !important;
+  box-sizing:border-box;
+}
+
+/* Central board scales from viewport height first, width second. */
+.visual-player .center-panel{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  overflow:visible !important;
+}
+.visual-player .board-frame{
+  height:min(calc(100vh - 118px), calc((100vw - 700px) * 1.96)) !important;
+  max-height:100% !important;
+  width:auto !important;
+  aspect-ratio:1/2 !important;
+  margin:auto !important;
+  flex:0 1 auto !important;
+}
+.visual-player #board{
+  width:100% !important;
+  height:100% !important;
+  display:block !important;
+}
+
+/* Side HUD content compresses vertically rather than falling below viewport. */
+.visual-player .side-left,
+.visual-player .side-right{
+  display:flex !important;
+  flex-direction:column !important;
+  overflow:hidden !important;
+}
+.visual-player .left-top-grid{
+  flex:0 0 auto !important;
+}
+.visual-player .section-heading{
+  flex:0 0 auto !important;
+  margin-top:7px !important;
+  margin-bottom:5px !important;
+}
+.visual-player .large-stack{
+  flex:1 1 0 !important;
+  min-height:0 !important;
+  overflow:hidden !important;
+  display:grid !important;
+  grid-template-rows:minmax(0,1fr) minmax(0,1fr) !important;
+}
+.visual-player .large-mini-card{
+  min-height:0 !important;
+  overflow:hidden !important;
+}
+.visual-player .large-mini-card .mini-board{
+  max-height:100% !important;
+}
+
+/* Short-height desktops: aggressively tighten paddings while keeping all info visible. */
+@media (max-height:900px){
+  .visual-player .topbar{
+    margin-top:6px !important;
+    min-height:50px !important;
+  }
+  .visual-player .player-shell{
+    height:calc(100vh - 72px) !important;
+    padding-top:14px !important;
+    padding-bottom:12px !important;
+  }
+  .visual-player .side-panel{
+    padding:10px !important;
+  }
+  .visual-player .quick-stat{
+    min-height:42px !important;
+    padding:6px 8px !important;
+  }
+  .visual-player .next-box{
+    padding:7px !important;
+  }
+  .visual-player .section-heading{
+    margin:5px 0 4px !important;
+    font-size:10px !important;
+  }
+  .visual-player .large-stack{
+    gap:7px !important;
+  }
+  .visual-player .large-mini-card{
+    padding:8px !important;
+    gap:8px !important;
+  }
+  .visual-player .board-frame{
+    height:min(calc(100vh - 96px), calc((100vw - 650px) * 1.96)) !important;
+  }
+}
+
+/* 768–820px effective browser height, common on company PCs. */
+@media (max-height:820px){
+  .visual-player .topbar{
+    margin:4px 8px 0 !important;
+    width:calc(100% - 16px) !important;
+    min-height:46px !important;
+    border-radius:12px !important;
+  }
+  .visual-player .player-shell{
+    height:calc(100vh - 60px) !important;
+    padding:8px 12px 10px !important;
+    gap:14px !important;
+  }
+  .visual-player .player-shell::before{
+    display:none !important;
+  }
+  .visual-player .side-panel{
+    padding:8px !important;
+    border-radius:16px !important;
+  }
+  .visual-player .left-top-grid{
+    gap:6px !important;
+  }
+  .visual-player .quick-stat{
+    min-height:38px !important;
+    padding:5px 7px !important;
+  }
+  .visual-player .quick-stat span{
+    font-size:7px !important;
+  }
+  .visual-player .quick-stat b{
+    font-size:16px !important;
+  }
+  .visual-player .mini-controls{
+    padding:5px 6px !important;
+  }
+  .visual-player .mini-controls span{
+    font-size:6px !important;
+  }
+  .visual-player .next-box{
+    padding:6px !important;
+  }
+  .visual-player #nextCanvas{
+    max-height:68px !important;
+  }
+  .visual-player .section-heading{
+    margin:4px 0 3px !important;
+    font-size:9px !important;
+  }
+  .visual-player .large-stack{
+    gap:6px !important;
+  }
+  .visual-player .large-mini-card{
+    padding:6px 7px !important;
+    grid-template-columns:minmax(0,1fr) minmax(58px,28%) !important;
+  }
+  .visual-player .large-mini-card .mini-copy>strong{
+    font-size:12px !important;
+  }
+  .visual-player .large-mini-card .mini-label{
+    font-size:7px !important;
+  }
+  .visual-player .mini-inline-meta b{
+    font-size:10px !important;
+  }
+  .visual-player .mini-inline-meta small{
+    font-size:7px !important;
+  }
+  .visual-player .board-frame{
+    height:min(calc(100vh - 78px), calc((100vw - 560px) * 1.96)) !important;
+  }
+  .visual-player .center-panel::before{left:-8px !important}
+  .visual-player .center-panel::after{right:-8px !important}
+}
+
+/* Narrower windows: preserve the full 20-row board and both side rails. */
+@media (max-width:1380px) and (min-width:760px){
+  .visual-player .player-shell{
+    grid-template-columns:minmax(220px,.82fr) minmax(250px,.78fr) minmax(220px,.82fr) !important;
+    gap:12px !important;
+  }
+  .visual-player .board-frame{
+    height:min(calc(100vh - 92px), calc((100vw - 500px) * 1.98)) !important;
+  }
+}
+
+/* Last-resort compact desktop mode: never require vertical scrolling. */
+@media (max-width:1050px) and (min-width:760px){
+  .visual-player .player-shell{
+    grid-template-columns:minmax(190px,.76fr) minmax(220px,.72fr) minmax(190px,.76fr) !important;
+    gap:8px !important;
+    padding-left:8px !important;
+    padding-right:8px !important;
+  }
+  .visual-player .next-box{
+    display:none !important;
+  }
+  .visual-player .left-top-grid{
+    grid-template-columns:1fr !important;
+  }
+  .visual-player .board-frame{
+    height:min(calc(100vh - 78px), calc((100vw - 420px) * 2)) !important;
+  }
+}
+
+/* Practice uses the same viewport-fit discipline. */
+.practice-page{
+  overflow:hidden !important;
+}
+.practice-layout{
+  height:calc(100vh - 68px) !important;
+  min-height:0 !important;
+  overflow:hidden !important;
+}
+.practice-board-wrap,
+.practice-side{
+  min-height:0 !important;
+  max-height:100% !important;
+}
+.practice-board-shell{
+  height:min(100%, calc((100vw - 580px) * 1.98)) !important;
+  max-height:100% !important;
+  width:auto !important;
+  aspect-ratio:1/2 !important;
+}

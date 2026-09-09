@@ -370,3 +370,13 @@ V0.22で追加SQLはありません。
 - 左右をホログラムHUD化、背景の星/グリッド/軌道を強化
 - TOP/PRACTICE/PROJECTORも同一世界観へ
 - ゲームロジック/Supabase/SQLは変更なし。SQL追加なし
+
+## V0.30 QUANTUM ARENA VIEWPORT FIT
+- Visual Phase 2の世界観を維持したまま、PLAYER下端クリップを修正
+- ブラウザ実表示高から盤面と左右HUDを逆算して自動フィット
+- 1920x1080系 / 1536x864 / 1366x768クラスで縦スクロール不要
+- 20段盤面を常時全表示
+- 左右パネルも画面下まで全表示
+- 高さが低い画面ではpadding / NEXT / card / textを段階的に圧縮
+- PRACTICEも同じviewport-fit方針に修正
+- Supabase / SQL / ゲームロジック変更なし
