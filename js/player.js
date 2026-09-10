@@ -1,3 +1,4 @@
+import {requireSessionSchema} from "./session.js";
 import {CONFIG} from "./config.js";
 import {Tetris} from "./tetris.js";
 import {Renderer} from "./render.js";
@@ -83,10 +84,12 @@ function clearPeerHUD(){
 }
 
 let emergencyReloading=false;
+let sessionEpoch=null;
 
 function forceEmergencyResetReload(){
  if(emergencyReloading)return;
  emergencyReloading=true;
+ sessionStorage.removeItem("br-player-id");
 
  // Stop everything immediately before reload.
  joined=false;
@@ -108,6 +111,15 @@ function forceEmergencyResetReload(){
    url.searchParams.set("_reset",String(Date.now()));
    window.location.replace(url.toString());
  },120);
+}
+
+function prepareNextBattle(nextMatch){
+ match={...match,...nextMatch};seenBattleNo=match.battle_no;
+ currentPhase="LOBBY";softDropHeld=false;
+ processedAttackIds.clear();processingAttackIds.clear();attackSourceById.clear();incomingTurnNotice.clear();
+ hideCountdown();hideResultOverlay();
+ $("#battleToast").classList.add("hidden");$("#combatAlert").classList.add("hidden");
+ clearPeerHUD();newGame();$("#statusText").textContent=joined?"READY":"LOBBY";
 }
 
 function handleEmergencyReset(nextMatch){
@@ -164,8 +176,9 @@ async function fetchFinalPlayers(){
 }
 
 async function showResultOverlay(){
+ const battle=match?.battle_no;
  const rows=await fetchFinalPlayers();
- if(!rows.length)return;
+ if(emergencyReloading||battle!==match?.battle_no||currentPhase!=="RESULT"||!rows.length)return;
 
  const sorted=[...rows].sort((a,b)=>{
    const ar=a.rank??9999, br=b.rank??9999;
@@ -244,7 +257,7 @@ async function syncMatchTruth(){
 
  const {data,error}=await supabase
    .from("matches")
-   .select("id,phase,battle_no,start_at,level")
+   .select("id,phase,battle_no,start_at,level,reset_epoch")
    .eq("id",match.id)
    .single();
 
@@ -257,13 +270,13 @@ async function syncMatchTruth(){
    seenBattleNo!==null &&
    data.battle_no!==seenBattleNo;
 
- if(data.phase==="RESET"){
+ if(data.reset_epoch!==sessionEpoch||data.phase==="RESET"){
    forceEmergencyResetReload();
    return;
  }
 
  if(generationChanged && data.phase==="LOBBY"){
-   handleEmergencyReset(data);
+   prepareNextBattle(data);
    return;
  }
 
@@ -276,16 +289,16 @@ async function syncMatchTruth(){
 }
 
 async function upsertPlayerRow(){
- if(!match||!name)return;
- const payload={id,match_id:match.id,player_name:name,ready:true,alive:game?.alive!==false,score:game?.score||0,max_combo:game?.maxCombo||0,max_attack:game?.maxAttack||0};
+ if(emergencyReloading||!match||!name)return;
+ const payload={id,match_id:match.id,reset_epoch:sessionEpoch,player_name:name,ready:true,alive:game?.alive!==false,score:game?.score||0,max_combo:game?.maxCombo||0,max_attack:game?.maxAttack||0};
  const {error}=await supabase.from("players").upsert(payload,{onConflict:"id"});
- if(error)console.error("players upsert",error);
+ if(error){if(error.message?.includes("BR_STALE_SESSION"))forceEmergencyResetReload();throw error;}
 }
 async function upsertStateRow(){
- if(!match||!name||!game)return;
- const payload={player_id:id,match_id:match.id,board:compactBoardToJson(game.snapshot()),next_piece:game.queue?.[0]||null,score:game.score||0,level:game.level||1,combo:game.combo||0,incoming_garbage:game.incoming.reduce((s,p)=>s+p.amount,0)};
+ if(emergencyReloading||!match||!name||!game)return;
+ const payload={player_id:id,match_id:match.id,reset_epoch:sessionEpoch,board:compactBoardToJson(game.snapshot()),next_piece:game.queue?.[0]||null,score:game.score||0,level:game.level||1,combo:game.combo||0,incoming_garbage:game.incoming.reduce((s,p)=>s+p.amount,0)};
  const {error}=await supabase.from("player_states").upsert(payload,{onConflict:"player_id"});
- if(error)console.error("state upsert",error);
+ if(error){if(error.message?.includes("BR_STALE_SESSION"))forceEmergencyResetReload();throw error;}
 }
 
 async function updateAttackPersistence(packet){
@@ -305,6 +318,7 @@ async function resolveAttackPersistence(attackId,status){
 }
 
 async function processIncomingAttackRow(a){
+ if(emergencyReloading||!joined||a?.reset_epoch!==sessionEpoch)return;
  if(!a||a.target_id!==id||a.status!=="PENDING"||!game?.alive)return;
  if(processedAttackIds.has(a.id)||processingAttackIds.has(a.id))return;
 
@@ -345,7 +359,7 @@ async function syncPendingAttacks(){
  if(!match||!joined||!game?.alive)return;
 
  const {data,error}=await supabase.from("attacks")
-   .select("id,match_id,attacker_id,target_id,amount,turns_remaining,status,created_at")
+   .select("id,match_id,reset_epoch,attacker_id,target_id,amount,turns_remaining,status,created_at")
    .eq("match_id",match.id)
    .eq("target_id",id)
    .eq("status","PENDING")
@@ -402,7 +416,8 @@ async function refreshAliveCount(){
 }
 async function subscribeOnline(){
  await syncServerClock();
- match=await getRoom();
+ match=requireSessionSchema(await getRoom());
+ sessionEpoch=match.reset_epoch;
  seenBattleNo=match.battle_no;
  await upsertPlayerRow(); await upsertStateRow(); await loadPeers(); await refreshAliveCount();
 
@@ -412,13 +427,13 @@ async function subscribeOnline(){
     const battleChanged=seenBattleNo!==null && incoming.battle_no!==seenBattleNo;
     match={...match,...incoming};
 
-    if(match.phase==="RESET"){
+    if(match.reset_epoch!==sessionEpoch||match.phase==="RESET"){
       forceEmergencyResetReload();
       return;
     }
 
     if(battleChanged && match.phase==="LOBBY"){
-      handleEmergencyReset(incoming);
+      prepareNextBattle(incoming);
       return;
     }
 
@@ -441,8 +456,9 @@ async function subscribeOnline(){
 
  supabase.channel(`players-${match.id}`)
   .on("postgres_changes",{event:"*",schema:"public",table:"players",filter:`match_id=eq.${match.id}`},async payload=>{
-    const row=payload.new||payload.old;
-    if(!row)return;
+    const row=payload.eventType==="DELETE"?payload.old:payload.new;
+    if(!row||emergencyReloading)return;
+    if(payload.eventType!=="DELETE"&&row.reset_epoch!==sessionEpoch)return;
 
     // EMERGENCY RESET deletes this player's own row.
     // Do NOT ignore self DELETE: it is the most reliable reset signal.
@@ -468,7 +484,7 @@ async function subscribeOnline(){
 
  supabase.channel(`states-${match.id}`)
   .on("postgres_changes",{event:"*",schema:"public",table:"player_states",filter:`match_id=eq.${match.id}`},payload=>{
-    const row=payload.new;if(!row||row.player_id===id)return;
+    const row=payload.new;if(!row||row.player_id===id||emergencyReloading||row.reset_epoch!==sessionEpoch)return;
     const prev=peers.get(row.player_id)||{id:row.player_id,name:"PLAYER"};
     peers.set(row.player_id,{...prev,snapshot:jsonBoardToCompact(row.board),score:row.score??prev.score});
     renderPeerHUD();
@@ -482,11 +498,11 @@ async function subscribeOnline(){
  onlineReady=true;
 }
 async function requestAttack(amount){
- if(!match||amount<=0)return;
+ if(emergencyReloading||!joined||!match||amount<=0)return;
  const {data:alive,error}=await supabase.from("players").select("id,player_name").eq("match_id",match.id).eq("alive",true).neq("id",id);
  if(error||!alive?.length)return;
  const target=alive[Math.floor(Math.random()*alive.length)];
- const {error:insertErr}=await supabase.from("attacks").insert({match_id:match.id,attacker_id:id,target_id:target.id,amount,turns_remaining:2,status:"PENDING"});
+ const {error:insertErr}=await supabase.from("attacks").insert({match_id:match.id,reset_epoch:sessionEpoch,attacker_id:id,target_id:target.id,amount,turns_remaining:2,status:"PENDING"});
  if(insertErr){console.error("attack insert",insertErr);return;}
  lastAttackTargetId=target.id;lastAttackAmount=amount;
  const prev=peers.get(target.id)||{id:target.id,name:target.player_name,alive:true,score:0,snapshot:""};
@@ -503,7 +519,7 @@ async function requestAttack(amount){
 async function markKO(reason,score){
  if(!match)return;
  await supabase.from("players").update({alive:false,score,max_combo:game.maxCombo,max_attack:game.maxAttack}).eq("id",id);
- await upsertStateRow();
+ try{await upsertStateRow();}catch(error){console.error("KO state",error);}
 }
 
 
@@ -694,6 +710,8 @@ function newGame(){game=new Tetris(callbacks());renderer.draw(game);updateIncomi
 newGame();
 
 $("#joinBtn").onclick=async()=>{
+ if(emergencyReloading||$("#joinBtn").disabled)return;
+ $("#joinBtn").disabled=true;
  name=$("#nameInput").value.trim()||`PLAYER-${id.slice(0,4).toUpperCase()}`;
  $("#playerNameLabel").textContent=name;
  $("#statusText").textContent="CONNECTING";
@@ -705,6 +723,7 @@ $("#joinBtn").onclick=async()=>{
      await upsertPlayerRow();
      await upsertStateRow();
    }
+   if(emergencyReloading)return;
    joined=true;
    seenBattleNo=match?.battle_no??seenBattleNo;
    $("#overlay").classList.add("hidden");
@@ -712,8 +731,9 @@ $("#joinBtn").onclick=async()=>{
  }catch(err){
    console.error("READY / Supabase error:",err);
    $("#statusText").textContent="ERROR";
+   joined=false;
    alert(`Supabase接続に失敗しました。\n${err?.message||err}`);
- }
+ }finally{$("#joinBtn").disabled=false;}
 };
 function showCountdown(value, go=false){
  const overlay=$("#countdownOverlay");
@@ -736,7 +756,9 @@ function hideCountdown(){
 function startMatch(startAt){
  newGame();matchStartAt=startAt;attackUnlockAt=startAt+CONFIG.OPENING_ATTACK_LOCK_MS;currentPhase="COUNTDOWN";
  let lastShown=null;
+ const countdownGame=game;
  const countdown=()=>{
+  if(emergencyReloading||!joined||game!==countdownGame)return;
   const d=startAt-serverNow();
   if(d>0){
     const n=Math.max(1,Math.ceil(d/1000));
@@ -753,10 +775,10 @@ function startMatch(startAt){
 }
 // Supabase Realtime handles online events.
 
-function sendState(){
+async function sendState(){
  if(!joined||!name||!game||!match)return;
- upsertPlayerRow();
- upsertStateRow();
+ try{await upsertPlayerRow();if(joined&&!emergencyReloading)await upsertStateRow();}
+ catch(error){console.error("save state",error);}
 }
 window.addEventListener("keydown",e=>{
  if(!game.started||!game.alive)return;

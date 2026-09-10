@@ -1,3 +1,11 @@
+# BLOCK ROYALE v0.36 — SESSION RESET FIX
+
+最初に `UPDATE_v0.36.md` の導入手順をお読みください。追加SQLの実行が必須です。
+
+現行版はSupabaseオンライン版です。以下は過去の開発履歴であり、初期版のBroadcastChannelに関する記述は現行仕様ではありません。
+
+---
+
 # BLOCK ROYALE Phase 1 v0.34 — LINE IMPACT FX
 
 Base: v0.33 ARENA REVEAL.

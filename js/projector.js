@@ -9,11 +9,13 @@ function render(){
  if(phase==="LOBBY"){$("#heroText").textContent="LOBBY";$("#timerText").textContent=`READY ${arr.filter(p=>p.ready).length}`;}
 }
 async function renderResult(){
+ const epoch=match.reset_epoch,battle=match.battle_no;
  const {data}=await supabase
    .from("players")
    .select("id,player_name,alive,score,rank")
    .eq("match_id",match.id);
 
+ if(epoch!==match.reset_epoch||battle!==match.battle_no||phase!=="RESULT")return;
  const arr=data||[];
  const winner=arr.find(p=>p.rank===1)
    || [...arr].sort((a,b)=>(b.score||0)-(a.score||0))[0]
@@ -29,7 +31,9 @@ async function renderResult(){
 }
 
 async function loadPlayers(){
- const {data}=await supabase.from("players").select("id,player_name,ready,alive,score").eq("match_id",match.id);
+ const epoch=match.reset_epoch;
+ const {data,error}=await supabase.from("players").select("id,player_name,ready,alive,score").eq("match_id",match.id).eq("reset_epoch",epoch);
+ if(error||epoch!==match.reset_epoch)return;
  players.clear();for(const p of data||[])players.set(p.id,{id:p.id,name:p.player_name,ready:p.ready,alive:p.alive,score:p.score||0});render();
 }
 async function init(){
@@ -37,7 +41,8 @@ async function init(){
  match=await getRoom();phase=match.phase;if(match.start_at){startAt=Date.parse(match.start_at);attackUnlockAt=startAt+CONFIG.OPENING_ATTACK_LOCK_MS;}await loadPlayers();
  supabase.channel(`projector-${match.id}`)
   .on("postgres_changes",{event:"*",schema:"public",table:"players",filter:`match_id=eq.${match.id}`},payload=>{
-    const p=payload.new||payload.old;if(!p)return;
+    const p=payload.eventType==="DELETE"?payload.old:payload.new;if(!p)return;
+    if(payload.eventType!=="DELETE"&&p.reset_epoch!==match.reset_epoch)return;
     if(payload.eventType==="DELETE"){
       players.delete(p.id);
       render();
@@ -47,7 +52,7 @@ async function init(){
     render();
   })
   .on("postgres_changes",{event:"UPDATE",schema:"public",table:"matches",filter:`id=eq.${match.id}`},payload=>{
-    match={...match,...payload.new};phase=match.phase;if(match.start_at){startAt=Date.parse(match.start_at);attackUnlockAt=startAt+CONFIG.OPENING_ATTACK_LOCK_MS;}if(phase==="RESULT")renderResult();else render();
+    applyMatch(payload.new);
   }).subscribe();
 }
 function loop(){
@@ -62,5 +67,22 @@ function loop(){
  }
  requestAnimationFrame(loop);
 }
-render();init();loop();
+function applyMatch(next){
+ if(match&&next.reset_epoch<match.reset_epoch)return;
+ if(match&&next.reset_epoch!==match.reset_epoch)players.clear();
+ match={...match,...next};phase=match.phase;
+ startAt=match.start_at?Date.parse(match.start_at):0;
+ attackUnlockAt=startAt?startAt+CONFIG.OPENING_ATTACK_LOCK_MS:0;
+ if(phase==="RESULT")renderResult();else render();
+}
+let healing=false;
+async function healProjector(){
+ if(!match||healing)return;healing=true;
+ try{applyMatch(await getRoom());await loadPlayers();}
+ catch(error){console.error("projector self-heal",error);}
+ finally{healing=false;}
+}
+setInterval(healProjector,1000);
+window.addEventListener("focus",healProjector);
+render();init().catch(console.error);loop();
 setInterval(()=>syncServerClock(),30000);

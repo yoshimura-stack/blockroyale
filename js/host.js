@@ -1,6 +1,7 @@
+import {requireSessionSchema,resetRoom,resetError} from "./session.js";
 import {supabase,getRoom,serverNow,syncServerClock} from "./supabase.js";
 const $=s=>document.querySelector(s);
-const players=new Map();let match=null,phase="LOBBY",finishingMatch=false;
+const players=new Map();let match=null,phase="LOBBY",finishingMatch=false,resetting=false,startTimer=null;
 
 function render(){
  const arr=[...players.values()];
@@ -20,7 +21,8 @@ async function assignKoRank(playerId){
 }
 
 async function maybeFinishMatch(){
- if(!match||finishingMatch)return;
+ if(!match||finishingMatch||resetting)return;
+ const room={...match};
  const effectiveBattle =
    phase==="BATTLE" ||
    (phase==="COUNTDOWN" && match.start_at && Date.parse(match.start_at)<=serverNow());
@@ -56,7 +58,8 @@ async function maybeFinishMatch(){
 
  const {error}=await supabase.from("matches")
    .update({phase:"RESULT"})
-   .eq("id",match.id);
+   .eq("id",room.id).eq("reset_epoch",room.reset_epoch).eq("battle_no",room.battle_no)
+   .in("phase",["COUNTDOWN","BATTLE"]);
 
  if(error){
    console.error("finish match",error);
@@ -64,22 +67,31 @@ async function maybeFinishMatch(){
    return;
  }
 
+ if(match.reset_epoch!==room.reset_epoch||match.battle_no!==room.battle_no||resetting)return;
  phase="RESULT";
  render();
 }
 async function loadPlayers(){
- const {data,error}=await supabase.from("players").select("id,player_name,ready,alive,score,rank,max_combo,max_attack").eq("match_id",match.id);
+ const epoch=match.reset_epoch;
+ const {data,error}=await supabase.from("players").select("id,player_name,ready,alive,score,rank,max_combo,max_attack").eq("match_id",match.id).eq("reset_epoch",epoch);
  if(error){console.error(error);return;}
+ if(epoch!==match.reset_epoch)return;
  players.clear();
  for(const p of data||[])players.set(p.id,{id:p.id,name:p.player_name,ready:p.ready,alive:p.alive,score:p.score||0,rank:p.rank??null,maxCombo:p.max_combo||0,maxAttack:p.max_attack||0});
  render();
 }
 async function init(){
  try{
-   await syncServerClock();match=await getRoom();phase=match.phase;await loadPlayers();
+   setBusy(true);
+   await syncServerClock();match=requireSessionSchema(await getRoom());
+   if(performance.getEntriesByType("navigation")[0]?.type==="reload"){
+     match=await resetRoom(match);
+   }
+   phase=match.phase;await loadPlayers();setBusy(false);
    supabase.channel(`host-${match.id}`)
     .on("postgres_changes",{event:"*",schema:"public",table:"players",filter:`match_id=eq.${match.id}`},payload=>{
-      const p=payload.new||payload.old;if(!p)return;
+      const p=payload.eventType==="DELETE"?payload.old:payload.new;if(!p||resetting)return;
+      if(payload.eventType!=="DELETE"&&p.reset_epoch!==match.reset_epoch)return;
       if(payload.eventType==="DELETE"){
         players.delete(p.id);
         render();
@@ -103,94 +115,67 @@ async function init(){
       }
     })
     .on("postgres_changes",{event:"UPDATE",schema:"public",table:"matches",filter:`id=eq.${match.id}`},payload=>{
-      match={...match,...payload.new};phase=match.phase;render();
+      applyMatch(payload.new);
     }).subscribe();
- }catch(err){console.error(err);alert("Supabase接続に失敗しました。");}
+ }catch(err){console.error(err);alert(resetError(err));}
 }
-$("#startBtn").onclick=async()=>{
+function setBusy(value){
+ resetting=value;
+ for(const selector of ["#startBtn","#nextBtn","#resetBtn"])$(selector).disabled=value;
+}
+function applyMatch(next){
+ if(match&&next.reset_epoch<match.reset_epoch)return;
+ if(match&&next.reset_epoch!==match.reset_epoch){
+   clearTimeout(startTimer);finishingMatch=false;players.clear();
+ }
+ match={...match,...next};phase=match.phase;render();
+}
+async function checked(query){const {data,error}=await query;if(error)throw error;return data;}
+async function action(fn){
+ if(!match||resetting)return;
+ setBusy(true);
+ try{await fn();}catch(error){console.error(error);alert(resetError(error));}
+ finally{setBusy(false);await healHost();}
+}
+$("#startBtn").onclick=()=>action(async()=>{
  finishingMatch=false;
- if(!match)return;
+ await loadPlayers();
  if(![...players.values()].some(p=>p.ready))return alert("READYプレイヤーがまだいません。");
  await syncServerClock();
- const startAtMs=serverNow()+4000;
- const startAt=new Date(startAtMs).toISOString();
- await supabase.from("players").update({alive:true,score:0,rank:null,max_combo:0,max_attack:0}).eq("match_id",match.id);
- await supabase.from("matches").update({phase:"COUNTDOWN",start_at:startAt,level:1}).eq("id",match.id);
- setTimeout(()=>supabase.from("matches").update({phase:"BATTLE"}).eq("id",match.id),Math.max(0,startAtMs-serverNow()));
+ const room={...match},startAtMs=serverNow()+4000;
+ await checked(supabase.from("players").update({alive:true,score:0,rank:null,max_combo:0,max_attack:0}).eq("match_id",room.id).eq("reset_epoch",room.reset_epoch));
+ const rows=await checked(supabase.from("matches").update({phase:"COUNTDOWN",start_at:new Date(startAtMs).toISOString(),level:1}).eq("id",room.id).eq("reset_epoch",room.reset_epoch).select());
+ if(!rows?.length)throw new Error("セッションが更新されました。もう一度操作してください。");
+ applyMatch(rows[0]);clearTimeout(startTimer);
+ startTimer=setTimeout(async()=>{
+   try{await checked(supabase.from("matches").update({phase:"BATTLE"}).eq("id",room.id).eq("reset_epoch",room.reset_epoch).eq("phase","COUNTDOWN").eq("start_at",new Date(startAtMs).toISOString()));}
+   catch(error){console.error("start battle",error);}
+ },Math.max(0,startAtMs-serverNow()));
+});
+$("#nextBtn").onclick=()=>action(async()=>{
+ finishingMatch=false;clearTimeout(startTimer);
+ const room={...match};
+ await checked(supabase.from("players").update({ready:true,alive:true,score:0,rank:null,max_combo:0,max_attack:0}).eq("match_id",room.id).eq("reset_epoch",room.reset_epoch));
+ await checked(supabase.from("attacks").delete().eq("match_id",room.id).eq("reset_epoch",room.reset_epoch));
+ const rows=await checked(supabase.from("matches").update({phase:"LOBBY",start_at:null,battle_no:(room.battle_no||1)+1,level:1}).eq("id",room.id).eq("reset_epoch",room.reset_epoch).select());
+ if(!rows?.length)throw new Error("セッションが更新されました。");
+ applyMatch(rows[0]);
+});
+$("#resetBtn").onclick=()=>{
+ if(resetting||!match||!confirm("全プレイヤー・盤面・スコア・攻撃履歴を完全リセットしますか？"))return;
+ return action(async()=>{
+   clearTimeout(startTimer);finishingMatch=false;
+   applyMatch(await resetRoom(match));
+ });
 };
-$("#nextBtn").onclick=async()=>{
- finishingMatch=false;
- if(!match)return;
- await supabase.from("players").update({ready:true,alive:true,score:0,rank:null,max_combo:0,max_attack:0}).eq("match_id",match.id);
- await supabase.from("attacks").delete().eq("match_id",match.id);
- await supabase.from("matches").update({phase:"LOBBY",start_at:null,battle_no:(match.battle_no||1)+1,level:1}).eq("id",match.id);
-};
-$("#resetBtn").onclick=async()=>{
- finishingMatch=false;
- if(!match||!confirm("全プレイヤー・盤面・スコア・攻撃履歴を完全リセットしますか？"))return;
-
- const nextGeneration=(match.battle_no||1)+1;
-
- // STEP 1:
- // Publish an explicit RESET phase first.
- // PLAYER clients hard-reload immediately and therefore stop all local upserts.
- const {error:resetSignalError}=await supabase.from("matches")
-   .update({
-     phase:"RESET",
-     start_at:null,
-     battle_no:nextGeneration,
-     level:1
-   })
-   .eq("id",match.id);
-
- if(resetSignalError){
-   console.error("reset signal",resetSignalError);
-   alert("RESET通知に失敗しました。");
-   return;
- }
-
- match={...match,phase:"RESET",start_at:null,battle_no:nextGeneration,level:1};
- phase="RESET";
- players.clear();
- render();
-
- // STEP 2:
- // Give Realtime/self-heal clients time to receive RESET and reload.
- await new Promise(resolve=>setTimeout(resolve,1100));
-
- const attackDelete=await supabase.from("attacks").delete().eq("match_id",match.id);
- const stateDelete=await supabase.from("player_states").delete().eq("match_id",match.id);
- const playerDelete=await supabase.from("players").delete().eq("match_id",match.id);
-
- if(attackDelete.error||stateDelete.error||playerDelete.error){
-   console.error("reset delete error",{
-     attacks:attackDelete.error,
-     states:stateDelete.error,
-     players:playerDelete.error
-   });
-   alert("一部のデータ削除に失敗しました。Consoleを確認してください。");
- }
-
- // STEP 3:
- // The authoritative clean state is LOBBY with zero players.
- const {error:lobbyError}=await supabase.from("matches")
-   .update({
-     phase:"LOBBY",
-     start_at:null,
-     battle_no:nextGeneration,
-     level:1
-   })
-   .eq("id",match.id);
-
- if(lobbyError){
-   console.error("reset lobby finalization",lobbyError);
-   alert("LOBBY復帰に失敗しました。");
-   return;
- }
-
- match={...match,phase:"LOBBY",start_at:null,battle_no:nextGeneration,level:1};
- phase="LOBBY";
- players.clear();
- render();
-};
+let healing=false;
+async function healHost(){
+ if(!match||resetting||healing)return;
+ healing=true;
+ try{applyMatch(requireSessionSchema(await getRoom()));await loadPlayers();}
+ catch(error){console.error("host self-heal",error);}
+ finally{healing=false;}
+}
+setInterval(healHost,1000);
+window.addEventListener("focus",healHost);
 render();init();
