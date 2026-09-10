@@ -414,3 +414,10 @@ V0.22で追加SQLはありません。
 - Arena background saturation, contrast and brightness increased.
 - Larger breathing space between side HUD and the central board.
 - V0.31 true-viewport / no-bottom-clipping behavior preserved.
+
+## V0.35 — HUD CLARITY FIX
+- Wide desktop HUD rails moved outward to align over the baked HUD zones in the cinematic arena reference.
+- Arena reference slightly zoomed so most baked UI is pushed outside the viewport.
+- Live HUD glass opacity/readability rebalanced.
+- HUD typography enlarged and strengthened, especially player names, score/rank meta, attack information, state and controls.
+- V0.31 true viewport fix, V0.33 arena reveal, V0.34 line impact FX and all gameplay/network logic preserved.

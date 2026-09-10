@@ -1922,3 +1922,173 @@ body.visual-player::after{
   to{filter:saturate(1.39) contrast(1.17) brightness(1.12);transform:scale(1.012)}
 }
 \n\n/* =========================================================\n   V0.34 — LINE IMPACT FX\n   Bright frame bloom + micro impact. Canvas-specific row sweep\n   is rendered in js/render.js so the flash follows the cleared row.\n   ========================================================= */\n@keyframes brLineImpact1{\n  0%{filter:brightness(1);transform:translateZ(0)}\n  13%{filter:brightness(1.55) saturate(1.25);box-shadow:0 0 0 1px rgba(119,225,255,.95),0 0 34px rgba(80,207,255,.52),0 0 64px rgba(255,205,83,.16)}\n  100%{filter:brightness(1);transform:translateZ(0)}\n}\n@keyframes brLineImpact2{\n  0%{filter:brightness(1);transform:translateX(0)}\n  12%{filter:brightness(1.75) saturate(1.35);transform:translateX(-1px)}\n  20%{transform:translateX(1px)}\n  100%{filter:brightness(1);transform:translateX(0)}\n}\n@keyframes brLineImpact3{\n  0%{filter:brightness(1);transform:translateX(0) scale(1)}\n  10%{filter:brightness(1.95) saturate(1.45);transform:translateX(-2px) scale(1.003)}\n  17%{transform:translateX(2px) scale(1.003)}\n  24%{transform:translateX(-1px)}\n  100%{filter:brightness(1);transform:translateX(0) scale(1)}\n}\n@keyframes brLineImpact4{\n  0%{filter:brightness(1);transform:translateX(0) scale(1)}\n  8%{filter:brightness(2.25) saturate(1.6);transform:translateX(-3px) scale(1.006)}\n  13%{transform:translateX(3px) scale(1.006)}\n  18%{transform:translateX(-2px) scale(1.003)}\n  25%{transform:translateX(1px)}\n  100%{filter:brightness(1);transform:translateX(0) scale(1)}\n}\n.line-impact-1{animation:brLineImpact1 .52s cubic-bezier(.16,.84,.28,1)}\n.line-impact-2{animation:brLineImpact2 .56s cubic-bezier(.16,.84,.28,1)}\n.line-impact-3{animation:brLineImpact3 .60s cubic-bezier(.16,.84,.28,1)}\n.line-impact-4{animation:brLineImpact4 .64s cubic-bezier(.12,.86,.22,1)}\n.visual-player .board-frame.line-impact-2,\n.visual-player .board-frame.line-impact-3,\n.visual-player .board-frame.line-impact-4{\n  box-shadow:0 0 0 1px rgba(122,226,255,.95),0 0 32px rgba(52,194,255,.65),0 0 72px rgba(255,205,76,.32),0 28px 70px rgba(0,0,0,.55)!important;\n}\n.visual-player .board-frame.line-impact-4{\n  box-shadow:0 0 0 2px rgba(255,247,211,.95),0 0 38px rgba(86,220,255,.84),0 0 96px rgba(255,199,65,.58),0 0 150px rgba(64,153,255,.25),0 28px 70px rgba(0,0,0,.55)!important;\n}\n@media (prefers-reduced-motion:reduce){\n  .line-impact-1,.line-impact-2,.line-impact-3,.line-impact-4{animation:none!important}\n}\n
+/* ===================================================================
+   V0.35 — HUD CLARITY FIX
+   - Pushes the live HUD rails outward so they sit over the baked HUD
+     zones in arena-reference.png instead of stacking in front of them.
+   - Slightly zooms the arena texture to push most baked UI off-canvas.
+   - Raises live HUD typography without growing the panels back into walls.
+   - Gameplay / viewport / line-impact behavior unchanged.
+   =================================================================== */
+
+/* Push most of the reference-image HUD off the viewport while preserving
+   the arena lights, crowd and central tunnel. */
+body.visual-player::before{
+  background-size:132% auto !important;
+  background-position:center 49% !important;
+  opacity:.92 !important;
+  filter:saturate(1.36) contrast(1.16) brightness(1.08) !important;
+}
+
+/* Keep only a very light readability veil. */
+body.visual-player::after{
+  background:
+    radial-gradient(ellipse at 50% 43%,rgba(2,8,17,.00) 0 22%,rgba(2,8,17,.045) 48%,rgba(2,8,17,.14) 82%),
+    linear-gradient(180deg,rgba(0,0,0,.05),transparent 18%,transparent 80%,rgba(0,0,0,.11)) !important;
+}
+
+/* On wide desktops the side rails hug the outside of the screen instead
+   of clustering around the board. This deliberately overlays the baked
+   side panels in the reference art and opens clean arena space around the board. */
+@media (min-width:1400px){
+  .visual-player .game-layout{
+    grid-template-columns:minmax(300px,340px) minmax(350px,430px) minmax(300px,340px) !important;
+    justify-content:space-between !important;
+    column-gap:24px !important;
+    padding-left:clamp(18px,2.2vw,44px) !important;
+    padding-right:clamp(18px,2.2vw,44px) !important;
+  }
+  .visual-player .side-left{
+    transform:perspective(1500px) rotateY(1.45deg) !important;
+  }
+  .visual-player .side-right{
+    transform:perspective(1500px) rotateY(-1.45deg) !important;
+  }
+}
+
+/* A touch more opacity keeps the background artwork from visually fighting
+   the live data while still reading as floating glass. */
+.visual-player .side-panel{
+  background:linear-gradient(150deg,rgba(4,24,39,.70),rgba(6,10,27,.67) 58%,rgba(15,8,35,.62)) !important;
+  backdrop-filter:blur(13px) saturate(1.18) !important;
+}
+.visual-player .quick-stat,
+.visual-player .mini-controls,
+.visual-player .next-box,
+.visual-player .leader-box,
+.visual-player .status-pill,
+.visual-player .large-mini-card{
+  background:linear-gradient(145deg,rgba(2,13,24,.66),rgba(4,8,19,.59)) !important;
+}
+
+/* ---------------- HUD readability pass ---------------- */
+.visual-player .panel-title{
+  font-size:12px !important;
+  line-height:1.25 !important;
+  letter-spacing:.10em !important;
+  font-weight:950 !important;
+}
+.visual-player .section-heading{
+  font-size:12px !important;
+  line-height:1.25 !important;
+  letter-spacing:.08em !important;
+  margin:8px 0 6px !important;
+  font-weight:950 !important;
+}
+.visual-player .quick-stat span{
+  font-size:10px !important;
+  line-height:1.2 !important;
+  letter-spacing:.06em !important;
+  font-weight:850 !important;
+}
+.visual-player .quick-stat b{
+  font-size:21px !important;
+  line-height:1 !important;
+}
+.visual-player .mini-controls span{
+  font-size:9px !important;
+  line-height:1.2 !important;
+  font-weight:800 !important;
+}
+.visual-player .mini-controls kbd{
+  font-size:12px !important;
+  font-weight:950 !important;
+}
+.visual-player .large-mini-card .mini-label{
+  font-size:9px !important;
+  line-height:1.25 !important;
+  letter-spacing:.025em !important;
+}
+.visual-player .large-mini-card .mini-copy>strong{
+  font-size:17px !important;
+  line-height:1.16 !important;
+  font-weight:950 !important;
+}
+.visual-player .mini-inline-meta b{
+  font-size:14px !important;
+  line-height:1.15 !important;
+  font-weight:950 !important;
+}
+.visual-player .mini-inline-meta small{
+  font-size:9px !important;
+  line-height:1.25 !important;
+  font-weight:800 !important;
+}
+.visual-player .large-mini-card .mini-event{
+  font-size:10px !important;
+  line-height:1.25 !important;
+  font-weight:950 !important;
+  padding-top:6px !important;
+}
+.visual-player .status-row .status-pill{
+  font-size:12px !important;
+  font-weight:950 !important;
+}
+.visual-player .status-row .combo-readout{
+  font-size:17px !important;
+  font-weight:1000 !important;
+}
+.visual-player .leader-copy strong{
+  font-size:23px !important;
+  font-weight:1000 !important;
+}
+.visual-player .leader-copy span{
+  font-size:14px !important;
+  font-weight:950 !important;
+}
+.visual-player .leader-copy small{
+  font-size:12px !important;
+  line-height:1.3 !important;
+  font-weight:800 !important;
+}
+.visual-player .topbar .eyebrow{
+  font-size:11px !important;
+}
+.visual-player .topbar .top-stats span{
+  font-size:10px !important;
+  font-weight:850 !important;
+}
+.visual-player .topbar .top-stats b{
+  font-size:22px !important;
+  font-weight:1000 !important;
+}
+
+/* Keep the company-PC short-height layout readable without causing overflow. */
+@media (max-height:900px) and (min-width:1101px){
+  .visual-player .section-heading{font-size:11px !important;margin:6px 0 5px !important}
+  .visual-player .large-mini-card .mini-copy>strong{font-size:15px !important}
+  .visual-player .large-mini-card .mini-label{font-size:8px !important}
+  .visual-player .mini-inline-meta b{font-size:13px !important}
+  .visual-player .mini-inline-meta small{font-size:8px !important}
+  .visual-player .large-mini-card .mini-event{font-size:9px !important}
+  .visual-player .quick-stat span{font-size:9px !important}
+  .visual-player .quick-stat b{font-size:19px !important}
+  .visual-player .panel-title{font-size:11px !important}
+}
+
+@media (max-height:820px) and (min-width:1101px){
+  .visual-player .large-mini-card .mini-copy>strong{font-size:14px !important}
+  .visual-player .leader-copy strong{font-size:19px !important}
+  .visual-player .leader-copy span{font-size:12px !important}
+  .visual-player .leader-copy small{font-size:10px !important}
+}
