@@ -624,12 +624,20 @@ function callbacks(){
     updateIncoming();
     sendState();
   },
-  onClear:({cleared,combo,attack})=>{
+  onClear:({cleared,combo,attack,rows=[]})=>{
     const labels={1:"1ライン消去",2:"2ライン消去",3:"3ライン消去",4:"4ライン消去"};
     let text=labels[cleared]||"CLEAR";
     if(combo>=2)text+=`<br><span>${combo} コンボ</span>`;
     if(attack>0)text+=`<br><span>攻撃 ${attack}列</span>`;
     fx(text);
+    renderer.triggerLineClear(rows,cleared);
+    const frame=document.getElementById("boardFrame");
+    if(frame){
+      frame.classList.remove("line-impact-1","line-impact-2","line-impact-3","line-impact-4");
+      void frame.offsetWidth;
+      frame.classList.add(`line-impact-${Math.max(1,Math.min(4,cleared))}`);
+      setTimeout(()=>frame.classList.remove(`line-impact-${Math.max(1,Math.min(4,cleared))}`),620);
+    }
     visualPulse("clear",Math.max(1,cleared+(combo>=2?1:0)));
     $("#comboText").textContent=combo>=2?`🔥 ${combo} コンボ`:"—";
   },

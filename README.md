@@ -1,3 +1,14 @@
+# BLOCK ROYALE Phase 1 v0.34 — LINE IMPACT FX
+
+Base: v0.33 ARENA REVEAL.
+
+Changes in v0.34:
+- Added row-accurate line clear impact FX to PLAYER and PRACTICE.
+- Cleared rows flash white/gold, receive a fast cyan/gold horizontal light sweep, sparks and lingering rails.
+- Board-wide bloom and frame impact scale from 1-line through 4-line clears.
+- 4-line clear receives the strongest bloom and micro-shake.
+- Existing gameplay, networking and v0.31 viewport fit are unchanged.
+
 # BLOCK ROYALE Phase 1 v0.24 — LEADER HUD + CENTER ATTACK NOTICE
 
 ## v0.24 changes
@@ -394,3 +405,12 @@ V0.22で追加SQLはありません。
 - Added arena-reference visual layer, dimensional floor grid, energy tunnel, glowing pedestal, cyan/gold board rails, and deeper glass HUD treatment.
 - Gameplay, Supabase, controls, scoring, realtime logic, and V0.31 TRUE VIEWPORT FIX are unchanged.
 - Company-PC compact viewport rules are preserved.
+
+
+## V0.33 — ARENA REVEAL
+- V0.32 cinematic arena retained; no gameplay logic changes.
+- PLAYER side HUD rails narrowed to expose substantially more of the arena.
+- HUD/card opacity reduced so the space-stadium reads through the interface.
+- Arena background saturation, contrast and brightness increased.
+- Larger breathing space between side HUD and the central board.
+- V0.31 true-viewport / no-bottom-clipping behavior preserved.

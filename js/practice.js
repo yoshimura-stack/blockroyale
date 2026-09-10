@@ -45,7 +45,18 @@ function makeGame(){
     },
     onNext:type=>renderer.drawNext(type),
     onScore:()=>updateStats(game.stats()),
-    onClear:({cleared=1}={})=>{updateStats(game.stats());window.BR_VISUAL_PULSE?.("clear",cleared);},
+    onClear:({cleared=1,rows=[]}={})=>{
+      updateStats(game.stats());
+      renderer.triggerLineClear(rows,cleared);
+      const shell=board?.closest?.(".practice-board-shell");
+      if(shell){
+        shell.classList.remove("line-impact-1","line-impact-2","line-impact-3","line-impact-4");
+        void shell.offsetWidth;
+        shell.classList.add(`line-impact-${Math.max(1,Math.min(4,cleared))}`);
+        setTimeout(()=>shell.classList.remove(`line-impact-${Math.max(1,Math.min(4,cleared))}`),620);
+      }
+      window.BR_VISUAL_PULSE?.("clear",cleared);
+    },
     onStats:stats=>updateStats(stats),
     onKO:({score})=>{
       running=false;

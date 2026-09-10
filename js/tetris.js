@@ -181,6 +181,8 @@ export class Tetris {
       this.board[y][x]=this.current.type;
     }
     if(above){this.ko("TOP_OUT");return;}
+    const clearedRows=[];
+    for(let r=0;r<this.board.length;r++) if(this.board[r].every(Boolean)) clearedRows.push(r);
     const cleared=this.clearLines();
     // A LAST CHANCE piece must bring every hidden overflow cell back inside the board.
     if(this.lastChance){
@@ -191,7 +193,7 @@ export class Tetris {
       this.lastChance=false;
       this.cb.onSurvive?.();
     }
-    this.resolvePlacement(cleared);
+    this.resolvePlacement(cleared,clearedRows);
   }
   clearLines(){
     let n=0;
@@ -202,7 +204,7 @@ export class Tetris {
     }
     return n;
   }
-  resolvePlacement(cleared){
+  resolvePlacement(cleared,clearedRows=[]){
     let attack=0;
     if(cleared>0){
       this.combo++;
@@ -212,7 +214,7 @@ export class Tetris {
       attack=base+comboBonus;
       this.lines+=cleared;
       this.score+=(CONFIG.SCORE_LINES[cleared]??0)*this.level;
-      this.cb.onClear?.({cleared,combo:this.combo,attack,score:this.score});
+      this.cb.onClear?.({cleared,combo:this.combo,attack,score:this.score,rows:clearedRows});
     }else{
       this.combo=0;
     }
