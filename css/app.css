@@ -1461,7 +1461,7 @@ body.visual-player::before{
   pointer-events:none;
   background-image:
     linear-gradient(180deg,rgba(2,6,15,.38) 0%,rgba(2,7,16,.08) 42%,rgba(1,5,12,.58) 100%),
-    url('../assets/arena-reference.png');
+    url('../assets/arena-clean-v037.png');
   background-size:cover;
   background-position:center 48%;
   opacity:.56;
@@ -1768,7 +1768,7 @@ body.visual-player::before{
   opacity:.88 !important;
   background-image:
     linear-gradient(180deg,rgba(1,5,13,.14) 0%,rgba(1,6,14,.015) 38%,rgba(1,5,12,.25) 100%),
-    url('../assets/arena-reference.png') !important;
+    url('../assets/arena-clean-v037.png') !important;
   filter:saturate(1.32) contrast(1.14) brightness(1.08) !important;
   transform:scale(1.006) !important;
 }
@@ -2091,4 +2091,44 @@ body.visual-player::after{
   .visual-player .leader-copy strong{font-size:19px !important}
   .visual-player .leader-copy span{font-size:12px !important}
   .visual-player .leader-copy small{font-size:10px !important}
+}
+
+/* v0.37 CLEAN ARENA: the background contains architecture only.
+   The live DOM is the sole source of HUD, board, NEXT and entry controls. */
+body.visual-player::before{
+  background-size:cover !important;
+  background-position:center center !important;
+  opacity:1 !important;
+  filter:saturate(1.08) contrast(1.04) !important;
+}
+.visual-player .large-mini-card{
+  grid-template-rows:minmax(0,1fr) !important;
+}
+.visual-player .large-mini-card .mini-board{
+  width:auto !important;
+  height:100% !important;
+  max-width:100% !important;
+  min-height:0 !important;
+  object-fit:contain;
+}
+.visual-player .overlay-card{
+  padding:clamp(16px,2vw,24px);
+}
+.visual-player .overlay-card h2{
+  font-size:clamp(20px,1.85vw,30px);
+  white-space:nowrap;
+}
+@media (min-width:1101px){
+  .visual-player .game-layout{
+    grid-template-columns:minmax(248px,340px) minmax(300px,430px) minmax(248px,340px) !important;
+    justify-content:center !important;
+    column-gap:clamp(24px,5vw,96px) !important;
+    padding-left:24px !important;
+    padding-right:24px !important;
+  }
+  .visual-player .side-panel{
+    align-self:center !important;
+    height:min(100%,680px,78dvh) !important;
+    transform:none !important;
+  }
 }

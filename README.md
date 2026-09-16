@@ -1,3 +1,11 @@
+# BLOCK ROYALE v0.37 — CLEAN ARENA
+
+v0.36からの更新では追加SQLは不要です。`UPDATE_v0.37.md` をお読みください。
+
+以下はv0.36以前の履歴です。
+
+---
+
 # BLOCK ROYALE v0.36 — SESSION RESET FIX
 
 最初に `UPDATE_v0.36.md` の導入手順をお読みください。追加SQLの実行が必須です。
