@@ -19,7 +19,7 @@ function client(file,{reload=false,roomOverride={},rpcError=null}={}){
  let replaced=0;
  const context=vm.createContext({console,URL,Date,Map,Set,Math,Number,String,Promise,
   document:{querySelector,addEventListener(){},visibilityState:'visible'},
-  window:{addEventListener(){},location:{href:'https://example.test/player',replace(){replaced++;}}},
+  CustomEvent:class{},window:{dispatchEvent(){},addEventListener(){},location:{href:'https://example.test/player',replace(){replaced++;}}},
   sessionStorage:{getItem(){return null;},setItem(){},removeItem(){}},crypto:{randomUUID(){return 'player-id';}},
   CONFIG:{OPENING_ATTACK_LOCK_MS:15000,SNAPSHOT_INTERVAL_MS:500},supabase,
   performance:{getEntriesByType(){return [{type:reload?'reload':'navigate'}];}},
@@ -74,3 +74,18 @@ await test('stale HOST Realtime event cannot restore prior session player',async
  const handler=c.events.find(e=>e.filter.table==='players').fn;handler({eventType:'INSERT',new:{id:'old',reset_epoch:0}});assert.equal(c.run('players.size'),0);
 });
 console.log(`${passed} client tests passed (mock DOM/network; no live Realtime connection).`);
+
+await test('winner sees own WINNER, name, score and victory',async()=>{
+ const c=client('player.js');c.run('currentPhase="RESULT";fetchFinalPlayers=async()=>[{id,player_name:"Winner",rank:1,score:1083,alive:true},{id:"other",player_name:"Loser",rank:2,score:1864,alive:false}];');
+ await c.run('showResultOverlay()');assert.equal(c.nodes.get('#resultTitle').textContent,'🏆 WINNER');assert.equal(c.nodes.get('#resultName').textContent,'Winner');assert.equal(c.nodes.get('#resultScore').textContent,'SCORE 1,083');assert.equal(c.nodes.get('#statusText').textContent,'WINNER');
+});
+await test('loser sees GAME OVER and own score even with higher score or stale local alive',async()=>{
+ const c=client('player.js');c.run('currentPhase="RESULT";game.alive=true;fetchFinalPlayers=async()=>[{id:"other",player_name:"Winner",rank:1,score:1083,alive:true},{id,player_name:"Loser",rank:2,score:1864,alive:false}];');
+ await c.run('showResultOverlay()');assert.equal(c.nodes.get('#resultTitle').textContent,'GAME OVER');assert.equal(c.nodes.get('#resultName').textContent,'Loser');assert.equal(c.nodes.get('#resultScore').textContent,'SCORE 1,864');assert.equal(c.nodes.get('#resultRank').textContent,'あなたの順位 #2');assert.equal(c.nodes.get('#resultWinner').textContent,'優勝：Winner');assert.equal(c.nodes.get('#statusText').textContent,'K.O.');
+});
+await test('landing banner uses isolated class and short duration',async()=>{
+ const c=client('player.js');const added=[];c.run('$("#combatAlert")');c.nodes.get('#combatAlert').classList.add=(...names)=>added.push(...names);
+ c.run('showCombatAlert("landing","Rival",3,0)');assert.ok(added.includes('garbage-landing'));assert.ok(!added.includes('landing'));assert.equal(c.nodes.get('#combatAlertMain').textContent,'邪魔ブロック 3列 投下！');assert.equal(c.nodes.get('#combatAlertSub').textContent,'');
+});
+console.log('v0.38: all 13 client scenarios passed.');
+

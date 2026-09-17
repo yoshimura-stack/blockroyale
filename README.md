@@ -1,3 +1,9 @@
+# BLOCK ROYALE v0.38 — RESULT & LANDING FIX
+
+追加SQLは不要です。UPDATE_v0.38.mdを参照してください。
+
+---
+
 # BLOCK ROYALE v0.37 — CLEAN ARENA
 
 v0.36からの更新では追加SQLは不要です。`UPDATE_v0.37.md` をお読みください。

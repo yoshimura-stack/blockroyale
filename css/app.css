@@ -564,7 +564,7 @@ body{overflow:hidden}
   border-color:rgba(255,77,103,.82);
   box-shadow:0 28px 90px rgba(0,0,0,.68),0 0 58px rgba(255,77,103,.28);
 }
-.combat-alert.landing{
+.combat-alert.garbage-landing{
   border-color:rgba(255,77,103,1);
   background:rgba(34,8,14,.97);
 }
@@ -575,7 +575,7 @@ body{overflow:hidden}
   color:var(--gold);
 }
 .combat-alert.incoming .combat-alert-kicker,
-.combat-alert.landing .combat-alert-kicker{color:#ff7187}
+.combat-alert.garbage-landing .combat-alert-kicker{color:#ff7187}
 .combat-alert-name{
   margin-top:7px;
   font-size:clamp(30px,4.6vw,48px);
@@ -597,7 +597,7 @@ body{overflow:hidden}
   color:var(--gold);
 }
 .combat-alert.incoming .combat-alert-sub,
-.combat-alert.landing .combat-alert-sub{color:#ff7187}
+.combat-alert.garbage-landing .combat-alert-sub{color:#ff7187}
 .combat-alert.pop{animation:combatAlertPop .24s ease-out both}
 @keyframes combatAlertPop{
   0%{opacity:0;transform:translate(-50%,-50%) scale(.82)}
@@ -937,7 +937,7 @@ body::after{
     0 0 75px rgba(240,198,106,.18) !important;
 }
 .combat-alert.incoming,
-.combat-alert.landing{
+.combat-alert.garbage-landing{
   box-shadow:
     0 30px 100px rgba(0,0,0,.72),
     0 0 85px rgba(255,71,112,.20) !important;
@@ -2132,3 +2132,26 @@ body.visual-player::before{
     transform:none !important;
   }
 }
+
+/* v0.38: separate garbage landing from the homepage .landing layout. */
+.visual-player .combat-alert.garbage-landing{
+  display:block;
+  top:27%;
+  width:min(84%,330px);
+  height:auto;
+  min-height:0;
+  padding:10px 14px;
+  border-radius:12px;
+  background:rgba(30,5,13,.42) !important;
+  backdrop-filter:none;
+  box-shadow:0 0 16px rgba(255,71,112,.16) !important;
+  text-shadow:0 1px 3px #000;
+  pointer-events:none;
+}
+.visual-player .combat-alert.garbage-landing .combat-alert-kicker{font-size:10px;}
+.visual-player .combat-alert.garbage-landing .combat-alert-name{font-size:22px;margin-top:3px;}
+.visual-player .combat-alert.garbage-landing .combat-alert-main{font-size:16px;margin-top:5px;}
+.visual-player .combat-alert.garbage-landing .combat-alert-sub:empty{display:none;}
+.visual-player .result-overlay.loser .result-title{font-size:clamp(22px,3vw,38px) !important;line-height:1.15;}
+.result-winner{margin-top:14px;font-size:16px;color:var(--gold);overflow-wrap:anywhere;}
+.result-winner:empty{display:none;}

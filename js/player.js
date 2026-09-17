@@ -192,20 +192,23 @@ async function showResultOverlay(){
 
  overlay.classList.remove("hidden","loser");
 
- // Every PLAYER screen shows the SAME winner as the main event.
- $("#resultKicker").textContent="BLOCK ROYALE";
- $("#resultTitle").textContent="🏆 WINNER";
- $("#resultName").textContent=winner?.player_name||"PLAYER";
- $("#resultScore").textContent=`SCORE ${(winner?.score||0).toLocaleString()}`;
-
- if(winner?.id===id){
+ // The headline describes this player's result, not the shared winner.
+ const isWinner=winner?.id===id;
+ $("#resultKicker").textContent=isWinner?"BLOCK ROYALE":"対戦結果";
+ $("#resultTitle").textContent=isWinner?"🏆 WINNER":"GAME OVER";
+ $("#resultName").textContent=me?.player_name||name||"PLAYER";
+ $("#resultScore").textContent=`SCORE ${(me?.score||0).toLocaleString()}`;
+ $("#statusText").textContent=isWinner?"WINNER":(me?.alive===false?"K.O.":"RESULT");
+ if(isWinner){
    $("#resultRank").textContent="あなたが優勝！ 👑";
+   $("#resultWinner").textContent="";
+   visualPulse("winner",5);
  }else{
    overlay.classList.add("loser");
-   $("#resultRank").textContent=me?.rank
-     ? `あなたの順位 #${me.rank}`
-     : "試合終了";
+   $("#resultRank").textContent=me?.rank?`あなたの順位 #${me.rank}`:"試合終了";
+   $("#resultWinner").textContent=`優勝：${winner?.player_name||"PLAYER"}`;
  }
+
 }
 function hideResultOverlay(){
  $("#resultOverlay").classList.add("hidden");
@@ -219,16 +222,12 @@ function handleMatchResult(){
  softDropHeld=false;
  currentPhase="RESULT";
 
- // Stop all gameplay immediately on every client.
- if(game.alive){
-   $("#statusText").textContent="WINNER";
- }else{
-   $("#statusText").textContent="K.O.";
- }
-
+ // Wait for DB result rows instead of declaring victory from local alive.
+ $("#statusText").textContent="RESULT";
  hideCountdown();
  $("#battleToast").classList.add("hidden");
- visualPulse("winner",5);
+ $("#combatAlert").classList.add("hidden");
+
  showResultOverlay();
 }
 async function syncOwnPlayerTruth(){
@@ -534,7 +533,7 @@ function showCombatAlert(kind,playerName,amount,turns=null){
  const sub=$("#combatAlertSub");
 
  clearTimeout(combatAlertTimer);
- box.classList.remove("hidden","pop","outgoing","incoming","landing");
+ box.classList.remove("hidden","pop","outgoing","incoming","garbage-landing");
  void box.offsetWidth;
 
  const safeName=playerName||"プレイヤー";
@@ -546,10 +545,10 @@ function showCombatAlert(kind,playerName,amount,turns=null){
    main.textContent=`${safeName} へ攻撃！`;
    sub.textContent=`邪魔ブロック ${amount}列を送信`;
  }else if(kind==="landing"){
-   box.classList.add("landing");
+   box.classList.add("garbage-landing");
    kicker.textContent="攻撃してきたプレイヤー";
-   main.textContent=`${safeName} から攻撃！`;
-   sub.textContent=`邪魔ブロック ${amount}列 投下！`;
+   main.textContent=`邪魔ブロック ${amount}列 投下！`;
+   sub.textContent="";
  }else{
    box.classList.add("incoming");
    kicker.textContent="攻撃してきたプレイヤー";
@@ -565,10 +564,10 @@ function showCombatAlert(kind,playerName,amount,turns=null){
  box.classList.add("pop");
 
  // Incoming countdown is intentionally held longer than a normal FX.
- const ms = kind==="incoming" ? 1700 : 1500;
+ const ms = kind==="incoming" ? 1700 : kind==="landing" ? 950 : 1500;
  combatAlertTimer=setTimeout(()=>{
    box.classList.add("hidden");
-   box.classList.remove("pop","outgoing","incoming","landing");
+   box.classList.remove("pop","outgoing","incoming","garbage-landing");
  },ms);
 }
 
