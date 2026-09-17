@@ -1,13 +1,15 @@
-import {requireSessionSchema} from "./session.js";
 import {CONFIG} from "./config.js";
 import {Tetris} from "./tetris.js";
 import {Renderer} from "./render.js";
-import {supabase,getRoom,compactBoardToJson,jsonBoardToCompact,serverNow,syncServerClock} from "./supabase.js";
+import {Free50Client,unpackPlayers,serverNow,roomCode} from "./free50.js";
 
 const $=s=>document.querySelector(s);
 const board=$("#board"), next=$("#nextCanvas");
 const renderer=new Renderer(board,next);
-const id=sessionStorage.getItem("br-player-id")||crypto.randomUUID();sessionStorage.setItem("br-player-id",id);
+const client=new Free50Client({capture:capturePacket,onView:applyView,onError:networkError});
+const id=client.identity.id;
+let roster=[],resumedForfeit=false;
+document.querySelector('#roomLabel').textContent=roomCode;
 let name="", matchStartAt=0, attackUnlockAt=0, currentPhase="LOBBY", placement=0;
 let softDropHeld=false, lastSoftDropAt=0;
 let game;
@@ -89,7 +91,7 @@ let sessionEpoch=null;
 function forceEmergencyResetReload(){
  if(emergencyReloading)return;
  emergencyReloading=true;
- sessionStorage.removeItem("br-player-id");
+ client.stop(true);
 
  // Stop everything immediately before reload.
  joined=false;
@@ -162,18 +164,7 @@ function handleEmergencyReset(nextMatch){
  seenBattleNo=match?.battle_no??seenBattleNo;
 }
 
-async function fetchFinalPlayers(){
- if(!match)return [];
- const {data,error}=await supabase
-   .from("players")
-   .select("id,player_name,alive,score,rank,max_combo,max_attack")
-   .eq("match_id",match.id);
- if(error){
-   console.error("final players",error);
-   return [];
- }
- return data||[];
-}
+async function fetchFinalPlayers(){return roster;}
 
 async function showResultOverlay(){
  const battle=match?.battle_no;
@@ -186,7 +177,7 @@ async function showResultOverlay(){
    return (b.score||0)-(a.score||0);
  });
 
- const winner=sorted.find(p=>p.rank===1)||sorted[0];
+ const winner=sorted.find(p=>p.id===match.winner_id);
  const me=rows.find(p=>p.id===id);
  const overlay=$("#resultOverlay");
 
@@ -206,7 +197,7 @@ async function showResultOverlay(){
  }else{
    overlay.classList.add("loser");
    $("#resultRank").textContent=me?.rank?`あなたの順位 #${me.rank}`:"試合終了";
-   $("#resultWinner").textContent=`優勝：${winner?.player_name||"PLAYER"}`;
+   $("#resultWinner").textContent=winner?`優勝：${winner.player_name}`:"優勝者なし（全員離脱）";
  }
 
 }
@@ -230,298 +221,68 @@ function handleMatchResult(){
 
  showResultOverlay();
 }
-async function syncOwnPlayerTruth(){
- if(!match||!joined)return;
-
- const {data,error}=await supabase
-   .from("players")
-   .select("id")
-   .eq("id",id)
-   .maybeSingle();
-
- if(error){
-   console.error("player self-heal",error);
-   return;
+function capturePacket(){
+ // requestAnimationFrame pauses in a hidden tab. Heartbeats still advance gravity.
+ if(game.started&&game.alive){
+   const now=serverNow(),level=1+Math.floor(Math.max(0,now-matchStartAt)/CONFIG.LEVEL_INTERVAL_MS);
+   if(game.level!==level)game.setLevel(level);
+   game.tick(now);
  }
-
- // Emergency Reset removes the PLAYER row entirely.
- // NEXT BATTLE keeps it, so this cleanly distinguishes the two operations.
- if(!data){
-   forceEmergencyResetReload();
- }
+ const ranked=rankedPlayers(),index=ranked.findIndex(p=>p.id===id);
+ const watch=[ranked[index-1]?.id,ranked[index+1]?.id,lastAttackTargetId,lastAttackerId].filter(Boolean);
+ return {state:{board:game.snapshot(),score:game.score,alive:game.alive,
+   max_combo:game.maxCombo,max_attack:game.maxAttack},watch:[...new Set(watch)].slice(0,4)};
 }
-
-async function syncMatchTruth(){
- if(!match)return;
-
- const {data,error}=await supabase
-   .from("matches")
-   .select("id,phase,battle_no,start_at,level,reset_epoch")
-   .eq("id",match.id)
-   .single();
-
- if(error){
-   console.error("match self-heal",error);
-   return;
- }
-
- const generationChanged=
-   seenBattleNo!==null &&
-   data.battle_no!==seenBattleNo;
-
- if(data.reset_epoch!==sessionEpoch||data.phase==="RESET"){
-   forceEmergencyResetReload();
-   return;
- }
-
- if(generationChanged && data.phase==="LOBBY"){
-   prepareNextBattle(data);
-   return;
- }
-
- match={...match,...data};
- seenBattleNo=data.battle_no;
-
- if(data.phase==="RESULT"&&currentPhase!=="RESULT"){
-   handleMatchResult();
- }
+function networkError(error,count){
+ if(error.message.includes('SESSION_GONE')){forceEmergencyResetReload();return;}
+ $('#connectionStatus').textContent=`通信を再試行中 (${count}) — 45秒以上途切れると失格になります`;
 }
-
-async function upsertPlayerRow(){
- if(emergencyReloading||!match||!name)return;
- const payload={id,match_id:match.id,reset_epoch:sessionEpoch,player_name:name,ready:true,alive:game?.alive!==false,score:game?.score||0,max_combo:game?.maxCombo||0,max_attack:game?.maxAttack||0};
- const {error}=await supabase.from("players").upsert(payload,{onConflict:"id"});
- if(error){if(error.message?.includes("BR_STALE_SESSION"))forceEmergencyResetReload();throw error;}
-}
-async function upsertStateRow(){
- if(emergencyReloading||!match||!name||!game)return;
- const payload={player_id:id,match_id:match.id,reset_epoch:sessionEpoch,board:compactBoardToJson(game.snapshot()),next_piece:game.queue?.[0]||null,score:game.score||0,level:game.level||1,combo:game.combo||0,incoming_garbage:game.incoming.reduce((s,p)=>s+p.amount,0)};
- const {error}=await supabase.from("player_states").upsert(payload,{onConflict:"player_id"});
- if(error){if(error.message?.includes("BR_STALE_SESSION"))forceEmergencyResetReload();throw error;}
-}
-
-async function updateAttackPersistence(packet){
- if(!match||!packet?.attackId||packet.attackId==="local")return;
- await supabase.from("attacks").update({
-   amount:packet.amount,
-   turns_remaining:packet.turns
- }).eq("id",packet.attackId).eq("target_id",id).eq("status","PENDING");
-}
-
-async function resolveAttackPersistence(attackId,status){
- if(!match||!attackId||attackId==="local")return;
- await supabase.from("attacks").update({
-   status,
-   processed_at:new Date(serverNow()).toISOString()
- }).eq("id",attackId).eq("target_id",id);
-}
-
-async function processIncomingAttackRow(a){
- if(emergencyReloading||!joined||a?.reset_epoch!==sessionEpoch)return;
- if(!a||a.target_id!==id||a.status!=="PENDING"||!game?.alive)return;
- if(processedAttackIds.has(a.id)||processingAttackIds.has(a.id))return;
-
- processingAttackIds.add(a.id);
- try{
-   const attacker=peers.get(a.attacker_id);
-   let attackerName=attacker?.name;
-
-   if(!attackerName){
-     const {data}=await supabase.from("players")
-       .select("player_name")
-       .eq("id",a.attacker_id)
-       .maybeSingle();
-     attackerName=data?.player_name||"プレイヤー";
-   }
-
-   processedAttackIds.add(a.id);
-   lastAttackerId=a.attacker_id;
-   attackSourceById.set(a.id,attackerName);
-
-   $("#attackerEvent").textContent=`${attackerName} から ${a.amount}列の攻撃`;
-   showBattleToast("incoming",attackerName,a.amount);
-   flashCard("#attackerCard");
-
-   game.receiveAttack(
-     a.amount,
-     a.id,
-     Number.isFinite(Number(a.turns_remaining)) ? Number(a.turns_remaining) : CONFIG.INCOMING_TURNS
-   );
-   updateIncoming();
-   renderPeerHUD();
- }finally{
-   processingAttackIds.delete(a.id);
+async function applyView(view,initial){
+ $('#connectionStatus').textContent='接続中';
+ if(sessionEpoch!==null && view.match.reset_epoch!==sessionEpoch){forceEmergencyResetReload();return;}
+ const changed=seenBattleNo!==null && view.match.battle_no!==seenBattleNo;
+ if(changed){resumedForfeit=false;prepareNextBattle(view.match);}
+ match=view.match;sessionEpoch=match.reset_epoch;seenBattleNo=match.battle_no;
+ if(view.players){
+   roster=unpackPlayers(view.players);
+   const old=new Map(peers);peers.clear();
+   for(const p of roster)if(p.id!==id)peers.set(p.id,{...p,snapshot:view.boards?.[p.id]??old.get(p.id)?.snapshot??''});
  }
-}
-
-async function syncPendingAttacks(){
- if(!match||!joined||!game?.alive)return;
-
- const {data,error}=await supabase.from("attacks")
-   .select("id,match_id,reset_epoch,attacker_id,target_id,amount,turns_remaining,status,created_at")
-   .eq("match_id",match.id)
-   .eq("target_id",id)
-   .eq("status","PENDING")
-   .order("created_at",{ascending:true});
-
- if(error){
-   console.error("pending attack self-heal",error);
-   return;
+ $('#alive').textContent=view.alive;
+ if(initial && ['COUNTDOWN','BATTLE'].includes(match.phase)){
+   // Refresh cannot restore a lost local board fairly. Keep identity and forfeit.
+   resumedForfeit=true;game.alive=false;game.started=false;
+   $('#connectionStatus').textContent='対戦中にページが再読み込みされました。この試合は失格となり、次の試合から参加できます。';
  }
-
- for(const a of data||[]){
-   await processIncomingAttackRow(a);
+ if(view.me?.alive===false){game.alive=false;game.started=false;hideCountdown();$('#statusText').textContent='K.O.';}
+ if(match.phase==='RESULT'){
+   if(view.players)handleMatchResult();
+   else {game.started=false;currentPhase='RESULT';client.lastFull=0;}
+ }else if(['COUNTDOWN','BATTLE'].includes(match.phase) && !resumedForfeit && view.me?.alive && currentPhase==='LOBBY'){
+   startMatch(Date.parse(match.start_at));
+ }else if(match.phase==='LOBBY'){$('#statusText').textContent='READY';}
+ for(const sent of view.sent||[]){
+   lastAttackTargetId=sent.target_id;lastAttackAmount=sent.amount;
+   const target=peers.get(sent.target_id)?.name||'プレイヤー';
+   $('#targetEvent').textContent=`${target} へ攻撃 / 邪魔ブロック ${sent.amount}列`;
+   showBattleToast('outgoing',target,sent.amount);flashCard('#targetCard');
  }
-}
-
-async function catchUpToNow(showFx=false){
- if(!game?.started||!game.alive||currentPhase!=="BATTLE")return;
-
- const now=serverNow();
- const elapsed=Math.max(0,now-matchStartAt);
- const lv=1+Math.floor(elapsed/CONFIG.LEVEL_INTERVAL_MS);
-
- if(lv!==game.level){
-   game.setLevel(lv);
- }
-
- if(showFx)fx("時間同期中…");
- game.tick(now);
- renderer.draw(game);
- updateIncoming();
- sendState();
-
- if(showFx&&game.alive){
-   setTimeout(()=>fx("現在時刻に同期"),120);
- }
-}
-
-async function loadPeers(){
- if(!match)return;
- const {data,error}=await supabase.from("players").select("id,player_name,alive,score,max_combo,max_attack,player_states(board,level,combo,incoming_garbage)").eq("match_id",match.id);
- if(error){console.error("loadPeers",error);return;}
- peers.clear();
- for(const row of data||[]){
-   if(row.id===id)continue;
-   const st=Array.isArray(row.player_states)?row.player_states[0]:row.player_states;
-   peers.set(row.id,{id:row.id,name:row.player_name,alive:row.alive,score:row.score||0,maxCombo:row.max_combo||0,maxAttack:row.max_attack||0,snapshot:jsonBoardToCompact(st?.board)});
- }
+ if(currentPhase==='BATTLE')for(const a of view.attacks||[])processIncomingAttackRow(a);
  renderPeerHUD();
 }
-async function refreshAliveCount(){
- if(!match)return;
- const {count,error}=await supabase.from("players").select("id",{count:"exact",head:true}).eq("match_id",match.id).eq("alive",true);
- if(!error)$("#alive").textContent=count??0;
+function updateAttackPersistence(packet){client.ack(packet.attackId,packet.amount,packet.turns);}
+function resolveAttackPersistence(attackId,status){client.ack(attackId,0,0,status);}
+function processIncomingAttackRow(a){
+ if(!joined||a.reset_epoch!==sessionEpoch||a.battle_no!==seenBattleNo||a.target_id!==id||a.status!=='PENDING'||!game.alive||processedAttackIds.has(a.id))return;
+ processedAttackIds.add(a.id);lastAttackerId=a.attacker_id;
+ const attackerName=peers.get(a.attacker_id)?.name||'プレイヤー';
+ attackSourceById.set(a.id,attackerName);
+ $('#attackerEvent').textContent=`${attackerName} から ${a.amount}列の攻撃`;
+ showBattleToast('incoming',attackerName,a.amount);flashCard('#attackerCard');
+ game.receiveAttack(a.amount,a.id,a.turns_remaining);
 }
-async function subscribeOnline(){
- await syncServerClock();
- match=requireSessionSchema(await getRoom());
- sessionEpoch=match.reset_epoch;
- seenBattleNo=match.battle_no;
- await upsertPlayerRow(); await upsertStateRow(); await loadPeers(); await refreshAliveCount();
-
- supabase.channel(`match-${match.id}`)
-  .on("postgres_changes",{event:"UPDATE",schema:"public",table:"matches",filter:`id=eq.${match.id}`},payload=>{
-    const incoming=payload.new;
-    const battleChanged=seenBattleNo!==null && incoming.battle_no!==seenBattleNo;
-    match={...match,...incoming};
-
-    if(match.reset_epoch!==sessionEpoch||match.phase==="RESET"){
-      forceEmergencyResetReload();
-      return;
-    }
-
-    if(battleChanged && match.phase==="LOBBY"){
-      prepareNextBattle(incoming);
-      return;
-    }
-
-    seenBattleNo=match.battle_no;
-
-    if(match.phase==="COUNTDOWN"&&match.start_at){
-      const startAt=Date.parse(match.start_at);
-      if(joined&&currentPhase!=="COUNTDOWN"&&!game.started)startMatch(startAt);
-    }
-    if(match.phase==="RESULT"&&currentPhase!=="RESULT"){
-      handleMatchResult();
-    }
-    if(match.phase==="LOBBY"&&currentPhase!=="LOBBY"){
-      currentPhase="LOBBY";
-      hideResultOverlay();
-      newGame();
-      $("#statusText").textContent=joined?"READY":"LOBBY";
-    }
-  }).subscribe();
-
- supabase.channel(`players-${match.id}`)
-  .on("postgres_changes",{event:"*",schema:"public",table:"players",filter:`match_id=eq.${match.id}`},async payload=>{
-    const row=payload.eventType==="DELETE"?payload.old:payload.new;
-    if(!row||emergencyReloading)return;
-    if(payload.eventType!=="DELETE"&&row.reset_epoch!==sessionEpoch)return;
-
-    // EMERGENCY RESET deletes this player's own row.
-    // Do NOT ignore self DELETE: it is the most reliable reset signal.
-    if(payload.eventType==="DELETE" && row.id===id){
-      forceEmergencyResetReload();
-      return;
-    }
-
-    if(row.id===id)return;
-
-    if(payload.eventType==="DELETE"){
-      peers.delete(row.id);
-      if(lastAttackTargetId===row.id)lastAttackTargetId=null;
-      if(lastAttackerId===row.id)lastAttackerId=null;
-      renderPeerHUD();
-      await refreshAliveCount();
-      return;
-    }
-    const prev=peers.get(row.id)||{};
-    peers.set(row.id,{...prev,id:row.id,name:row.player_name??prev.name,alive:row.alive??prev.alive,score:row.score??prev.score,maxCombo:row.max_combo??prev.maxCombo,maxAttack:row.max_attack??prev.maxAttack});
-    renderPeerHUD(); await refreshAliveCount();
-  }).subscribe();
-
- supabase.channel(`states-${match.id}`)
-  .on("postgres_changes",{event:"*",schema:"public",table:"player_states",filter:`match_id=eq.${match.id}`},payload=>{
-    const row=payload.new;if(!row||row.player_id===id||emergencyReloading||row.reset_epoch!==sessionEpoch)return;
-    const prev=peers.get(row.player_id)||{id:row.player_id,name:"PLAYER"};
-    peers.set(row.player_id,{...prev,snapshot:jsonBoardToCompact(row.board),score:row.score??prev.score});
-    renderPeerHUD();
-  }).subscribe();
-
- supabase.channel(`attacks-${id}`)
-  .on("postgres_changes",{event:"INSERT",schema:"public",table:"attacks",filter:`target_id=eq.${id}`},payload=>{
-    processIncomingAttackRow(payload.new);
-  }).subscribe();
-
- onlineReady=true;
-}
-async function requestAttack(amount){
- if(emergencyReloading||!joined||!match||amount<=0)return;
- const {data:alive,error}=await supabase.from("players").select("id,player_name").eq("match_id",match.id).eq("alive",true).neq("id",id);
- if(error||!alive?.length)return;
- const target=alive[Math.floor(Math.random()*alive.length)];
- const {error:insertErr}=await supabase.from("attacks").insert({match_id:match.id,reset_epoch:sessionEpoch,attacker_id:id,target_id:target.id,amount,turns_remaining:2,status:"PENDING"});
- if(insertErr){console.error("attack insert",insertErr);return;}
- lastAttackTargetId=target.id;lastAttackAmount=amount;
- const prev=peers.get(target.id)||{id:target.id,name:target.player_name,alive:true,score:0,snapshot:""};
- peers.set(target.id,{...prev,name:target.player_name});
- $("#targetEvent").textContent=`${target.player_name} へ攻撃 / 邪魔ブロック ${amount}列`;
-
- // Dedicated center notice; cannot be overwritten by line-clear FX.
- showCombatAlert("outgoing",target.player_name,amount);
- showBattleToast("outgoing",target.player_name,amount);
-
- flashCard("#targetCard");
- renderPeerHUD();
-}
-async function markKO(reason,score){
- if(!match)return;
- await supabase.from("players").update({alive:false,score,max_combo:game.maxCombo,max_attack:game.maxAttack}).eq("id",id);
- try{await upsertStateRow();}catch(error){console.error("KO state",error);}
-}
-
-
+function requestAttack(amount){if(joined&&game.alive&&amount>0)client.attack(amount);}
+function markKO(){} // The next batched packet commits K.O. and the final score atomically.
 
 let combatAlertTimer=null;
 
@@ -657,7 +418,7 @@ function callbacks(){
     $("#comboText").textContent=combo>=2?`🔥 ${combo} コンボ`:"—";
   },
   onAttack:amount=>{
-    if(Date.now()<attackUnlockAt){
+    if(serverNow()<attackUnlockAt){
       fx("攻撃準備中");
       return;
     }
@@ -705,34 +466,22 @@ function callbacks(){
   }
  };
 }
-function newGame(){game=new Tetris(callbacks());renderer.draw(game);updateIncoming();lastAttackTargetId=null;lastAttackerId=null;$("#targetEvent").textContent="まだ攻撃していません";$("#attackerEvent").textContent="まだ攻撃を受けていません";renderPeerHUD()}
+function newGame(){game=new Tetris(callbacks());renderer.draw(game);updateIncoming();lastAttackTargetId=null;lastAttackerId=null;$("#score").textContent="0";$("#level").textContent="1";$("#maxCombo").textContent="0";$("#maxAttack").textContent="0";$("#comboText").textContent="—";$("#targetEvent").textContent="まだ攻撃していません";$("#attackerEvent").textContent="まだ攻撃を受けていません";renderPeerHUD()}
 newGame();
 
-$("#joinBtn").onclick=async()=>{
- if(emergencyReloading||$("#joinBtn").disabled)return;
- $("#joinBtn").disabled=true;
- name=$("#nameInput").value.trim()||`PLAYER-${id.slice(0,4).toUpperCase()}`;
- $("#playerNameLabel").textContent=name;
- $("#statusText").textContent="CONNECTING";
-
+$('#joinBtn').onclick=async()=>{
+ if(emergencyReloading||$('#joinBtn').disabled)return;
+ $('#joinBtn').disabled=true;
+ name=$('#nameInput').value.trim()||`PLAYER-${id.slice(0,4).toUpperCase()}`;
+ $('#playerNameLabel').textContent=name;
  try{
-   if(!onlineReady){
-     await subscribeOnline();
-   }else{
-     await upsertPlayerRow();
-     await upsertStateRow();
-   }
-   if(emergencyReloading)return;
    joined=true;
-   seenBattleNo=match?.battle_no??seenBattleNo;
-   $("#overlay").classList.add("hidden");
-   $("#statusText").textContent="READY";
- }catch(err){
-   console.error("READY / Supabase error:",err);
-   $("#statusText").textContent="ERROR";
-   joined=false;
-   alert(`Supabase接続に失敗しました。\n${err?.message||err}`);
- }finally{$("#joinBtn").disabled=false;}
+   const view=await client.join($('#entryCode').value,name);
+   name=unpackPlayers(view.players).find(p=>p.id===id)?.name||name;
+   $('#playerNameLabel').textContent=name;
+   $('#overlay').classList.add('hidden');
+ }catch(error){joined=false;$('#connectionStatus').textContent=error.message;}
+ finally{$('#joinBtn').disabled=false;}
 };
 function showCountdown(value, go=false){
  const overlay=$("#countdownOverlay");
@@ -757,7 +506,7 @@ function startMatch(startAt){
  let lastShown=null;
  const countdownGame=game;
  const countdown=()=>{
-  if(emergencyReloading||!joined||game!==countdownGame)return;
+  if(emergencyReloading||!joined||!game.alive||currentPhase!=="COUNTDOWN"||game!==countdownGame)return;
   const d=startAt-serverNow();
   if(d>0){
     const n=Math.max(1,Math.ceil(d/1000));
@@ -765,20 +514,15 @@ function startMatch(startAt){
     requestAnimationFrame(countdown);
   }else{
    showCountdown("START!",true);
-   game.start(serverNow());currentPhase="BATTLE";$("#statusText").textContent="OPENING";
+   game.start(startAt);currentPhase="BATTLE";$("#statusText").textContent="OPENING";
    setTimeout(()=>hideCountdown(),850);
    sendState();
   }
  };
  countdown();
 }
-// Supabase Realtime handles online events.
-
-async function sendState(){
- if(!joined||!name||!game||!match)return;
- try{await upsertPlayerRow();if(joined&&!emergencyReloading)await upsertStateRow();}
- catch(error){console.error("save state",error);}
-}
+// Network cadence is controlled only by Free50Client; gameplay callbacks never send.
+function sendState(){}
 window.addEventListener("keydown",e=>{
  if(!game.started||!game.alive)return;
  let handled=true;
@@ -845,48 +589,4 @@ function loop(){
  requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
-setInterval(sendState,CONFIG.SNAPSHOT_INTERVAL_MS);
-setInterval(()=>{ if(match)syncMatchTruth(); },1000);
-setInterval(()=>{ if(match&&joined)syncOwnPlayerTruth(); },1000);
-
-setInterval(()=>{ if(match&&joined)syncPendingAttacks(); },2000);
-
-async function recoverFromBackground(){
- if(!joined||!match)return;
-
- softDropHeld=false;
-
- await syncServerClock();
- await syncMatchTruth();
- await syncOwnPlayerTruth();
-
- if(!joined)return;
-
- await loadPeers();
- await syncPendingAttacks();
-
- if(match?.phase==="COUNTDOWN"&&match.start_at&&currentPhase!=="COUNTDOWN"&&!game.started){
-   startMatch(Date.parse(match.start_at));
-   return;
- }
-
- if((match?.phase==="BATTLE"||currentPhase==="BATTLE")&&game?.started&&game.alive){
-   currentPhase="BATTLE";
-   await catchUpToNow(true);
- }
-}
-
-document.addEventListener("visibilitychange",()=>{
- if(document.visibilityState==="visible"){
-   recoverFromBackground();
- }else{
-   softDropHeld=false;
- }
-});
-
-window.addEventListener("focus",()=>recoverFromBackground());
-window.addEventListener("pageshow",()=>recoverFromBackground());
-
-// Periodically re-sync client/server clock drift while foreground.
-setInterval(()=>{ if(document.visibilityState==="visible")syncServerClock(); },30000);
-
+document.addEventListener('visibilitychange',()=>{softDropHeld=false;});

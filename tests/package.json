@@ -1,9 +1,10 @@
 {
-  "dependencies": {
-    "@electric-sql/pglite": "^0.5.8"
-  },
   "private": true,
+  "type": "module",
   "scripts": {
-    "test": "node database.mjs && node clients.mjs"
+    "test": "node database39.mjs && node clients39.mjs"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "0.5.8"
   }
 }

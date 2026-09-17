@@ -1921,7 +1921,55 @@ body.visual-player::after{
   from{filter:saturate(1.25) contrast(1.11) brightness(1.03);transform:scale(1.006)}
   to{filter:saturate(1.39) contrast(1.17) brightness(1.12);transform:scale(1.012)}
 }
-\n\n/* =========================================================\n   V0.34 — LINE IMPACT FX\n   Bright frame bloom + micro impact. Canvas-specific row sweep\n   is rendered in js/render.js so the flash follows the cleared row.\n   ========================================================= */\n@keyframes brLineImpact1{\n  0%{filter:brightness(1);transform:translateZ(0)}\n  13%{filter:brightness(1.55) saturate(1.25);box-shadow:0 0 0 1px rgba(119,225,255,.95),0 0 34px rgba(80,207,255,.52),0 0 64px rgba(255,205,83,.16)}\n  100%{filter:brightness(1);transform:translateZ(0)}\n}\n@keyframes brLineImpact2{\n  0%{filter:brightness(1);transform:translateX(0)}\n  12%{filter:brightness(1.75) saturate(1.35);transform:translateX(-1px)}\n  20%{transform:translateX(1px)}\n  100%{filter:brightness(1);transform:translateX(0)}\n}\n@keyframes brLineImpact3{\n  0%{filter:brightness(1);transform:translateX(0) scale(1)}\n  10%{filter:brightness(1.95) saturate(1.45);transform:translateX(-2px) scale(1.003)}\n  17%{transform:translateX(2px) scale(1.003)}\n  24%{transform:translateX(-1px)}\n  100%{filter:brightness(1);transform:translateX(0) scale(1)}\n}\n@keyframes brLineImpact4{\n  0%{filter:brightness(1);transform:translateX(0) scale(1)}\n  8%{filter:brightness(2.25) saturate(1.6);transform:translateX(-3px) scale(1.006)}\n  13%{transform:translateX(3px) scale(1.006)}\n  18%{transform:translateX(-2px) scale(1.003)}\n  25%{transform:translateX(1px)}\n  100%{filter:brightness(1);transform:translateX(0) scale(1)}\n}\n.line-impact-1{animation:brLineImpact1 .52s cubic-bezier(.16,.84,.28,1)}\n.line-impact-2{animation:brLineImpact2 .56s cubic-bezier(.16,.84,.28,1)}\n.line-impact-3{animation:brLineImpact3 .60s cubic-bezier(.16,.84,.28,1)}\n.line-impact-4{animation:brLineImpact4 .64s cubic-bezier(.12,.86,.22,1)}\n.visual-player .board-frame.line-impact-2,\n.visual-player .board-frame.line-impact-3,\n.visual-player .board-frame.line-impact-4{\n  box-shadow:0 0 0 1px rgba(122,226,255,.95),0 0 32px rgba(52,194,255,.65),0 0 72px rgba(255,205,76,.32),0 28px 70px rgba(0,0,0,.55)!important;\n}\n.visual-player .board-frame.line-impact-4{\n  box-shadow:0 0 0 2px rgba(255,247,211,.95),0 0 38px rgba(86,220,255,.84),0 0 96px rgba(255,199,65,.58),0 0 150px rgba(64,153,255,.25),0 28px 70px rgba(0,0,0,.55)!important;\n}\n@media (prefers-reduced-motion:reduce){\n  .line-impact-1,.line-impact-2,.line-impact-3,.line-impact-4{animation:none!important}\n}\n
+
+
+/* =========================================================
+   V0.34 — LINE IMPACT FX
+   Bright frame bloom + micro impact. Canvas-specific row sweep
+   is rendered in js/render.js so the flash follows the cleared row.
+   ========================================================= */
+@keyframes brLineImpact1{
+  0%{filter:brightness(1);transform:translateZ(0)}
+  13%{filter:brightness(1.55) saturate(1.25);box-shadow:0 0 0 1px rgba(119,225,255,.95),0 0 34px rgba(80,207,255,.52),0 0 64px rgba(255,205,83,.16)}
+  100%{filter:brightness(1);transform:translateZ(0)}
+}
+@keyframes brLineImpact2{
+  0%{filter:brightness(1);transform:translateX(0)}
+  12%{filter:brightness(1.75) saturate(1.35);transform:translateX(-1px)}
+  20%{transform:translateX(1px)}
+  100%{filter:brightness(1);transform:translateX(0)}
+}
+@keyframes brLineImpact3{
+  0%{filter:brightness(1);transform:translateX(0) scale(1)}
+  10%{filter:brightness(1.95) saturate(1.45);transform:translateX(-2px) scale(1.003)}
+  17%{transform:translateX(2px) scale(1.003)}
+  24%{transform:translateX(-1px)}
+  100%{filter:brightness(1);transform:translateX(0) scale(1)}
+}
+@keyframes brLineImpact4{
+  0%{filter:brightness(1);transform:translateX(0) scale(1)}
+  8%{filter:brightness(2.25) saturate(1.6);transform:translateX(-3px) scale(1.006)}
+  13%{transform:translateX(3px) scale(1.006)}
+  18%{transform:translateX(-2px) scale(1.003)}
+  25%{transform:translateX(1px)}
+  100%{filter:brightness(1);transform:translateX(0) scale(1)}
+}
+.line-impact-1{animation:brLineImpact1 .52s cubic-bezier(.16,.84,.28,1)}
+.line-impact-2{animation:brLineImpact2 .56s cubic-bezier(.16,.84,.28,1)}
+.line-impact-3{animation:brLineImpact3 .60s cubic-bezier(.16,.84,.28,1)}
+.line-impact-4{animation:brLineImpact4 .64s cubic-bezier(.12,.86,.22,1)}
+.visual-player .board-frame.line-impact-2,
+.visual-player .board-frame.line-impact-3,
+.visual-player .board-frame.line-impact-4{
+  box-shadow:0 0 0 1px rgba(122,226,255,.95),0 0 32px rgba(52,194,255,.65),0 0 72px rgba(255,205,76,.32),0 28px 70px rgba(0,0,0,.55)!important;
+}
+.visual-player .board-frame.line-impact-4{
+  box-shadow:0 0 0 2px rgba(255,247,211,.95),0 0 38px rgba(86,220,255,.84),0 0 96px rgba(255,199,65,.58),0 0 150px rgba(64,153,255,.25),0 28px 70px rgba(0,0,0,.55)!important;
+}
+@media (prefers-reduced-motion:reduce){
+  .line-impact-1,.line-impact-2,.line-impact-3,.line-impact-4{animation:none!important}
+}
+
 /* ===================================================================
    V0.35 — HUD CLARITY FIX
    - Pushes the live HUD rails outward so they sit over the baked HUD
@@ -2155,3 +2203,9 @@ body.visual-player::before{
 .visual-player .result-overlay.loser .result-title{font-size:clamp(22px,3vw,38px) !important;line-height:1.15;}
 .result-winner{margin-top:14px;font-size:16px;color:var(--gold);overflow-wrap:anywhere;}
 .result-winner:empty{display:none;}
+/* v0.39: small connection status; does not cover the board. */
+.connection-status{position:fixed;bottom:4px;left:8px;z-index:70;max-width:95vw;font-size:12px;color:#d9efff;background:rgba(3,10,20,.75);border-radius:4px;padding:3px 8px;pointer-events:none}
+.admin-actions{flex-wrap:wrap;gap:8px}
+.admin-actions input{min-width:190px;padding:12px;color:#fff;background:#0a1522;border:1px solid #264258;border-radius:8px}
+/* Keep v0.31's header/game rows. Old <=1380px rules must not split the shell into columns. */
+.visual-player .player-shell{grid-template-columns:minmax(0,1fr) !important;}

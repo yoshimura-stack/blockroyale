@@ -11,6 +11,15 @@
     <section class="admin-card glass">
       <div class="eyebrow">HOST CONTROL</div>
       <h1>BLOCK ROYALE</h1>
+      <p>v0.39 RC1 / ROOM <b id="hostRoom"></b></p>
+      <form id="loginForm" class="admin-actions">
+        <input id="email" type="email" autocomplete="username" placeholder="HOSTメール" required>
+        <input id="password" type="password" autocomplete="current-password" placeholder="パスワード" required>
+        <button id="loginBtn" class="btn primary">HOSTログイン</button>
+        <button id="logoutBtn" class="btn" type="button">ログアウト</button>
+      </form>
+      <div class="admin-actions"><input id="newEntry" type="password" autocomplete="off" minlength="12" maxlength="160" placeholder="新規部屋の入室コード（12文字以上）"><button id="createBtn" class="btn">部屋を初回作成</button></div>
+      <p id="hostStatus" role="status"></p>
       <div class="admin-stats">
         <div><span>READY</span><b id="readyCount">0</b></div>
         <div><span>ALIVE</span><b id="aliveCount">0</b></div>
@@ -21,14 +30,14 @@
         <button id="nextBtn" class="btn">NEXT BATTLE</button>
         <button id="resetBtn" class="btn danger">EMERGENCY RESET</button>
       </div>
-      <p class="small">v0.36 / HOSTを更新すると全参加者をリセットします。再参加にはREADYが必要です。</p>
+      <p class="small">再読み込みでは試合を維持します。全員を退室させるときはEMERGENCY RESETを使ってください。開始は8秒前から予告します。</p>
     </section>
     <section class="admin-card glass">
       <div class="panel-title">PLAYERS</div>
       <div id="players" class="player-list"></div>
     </section>
   </main>
-  <script type="module" src="./js/host.js"></script>
+  <script type="module" src="./js/host39.js"></script>
   <script type="module" src="./js/ambient.js"></script>
 </body>
 </html>
