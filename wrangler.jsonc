@@ -1,8 +1,8 @@
-// trigger v039 production deploy
 {
   "name": "blockroyale-v039-test",
   "compatibility_date": "2026-09-17",
   "assets": {
-    "directory": "."
+    "directory": "./public",
+    "not_found_handling": "none"
   }
 }

@@ -2,16 +2,16 @@ import vm from 'node:vm';
 import {readFileSync,writeFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
-const base=new URL('../js/',import.meta.url);
+const base=new URL('../public/js/',import.meta.url);
 const clean=file=>readFileSync(new URL(file,base),'utf8').replace(/^import .*?;\r?\n/gm,'').replace(/^export /gm,'');
 const results=[];
 async function test(name,fn){await fn();results.push(name);console.log('PASS',name);}
 const match={id:'TEST',phase:'LOBBY',battle_no:1,reset_epoch:0,start_at:null,winner_id:null};
-const baseView=()=>({match:{...match},players:[],boards:{},attacks:[],alive:2,me:{alive:true,last_seq:0}});
+const baseView=()=>({api_version:2,room_exists:true,host_authorized:true,match:{...match},players:[],boards:{},attacks:[],alive:2,me:{alive:true,last_seq:0}});
 function client(file='player.js'){
  const nodes=new Map(),timers=[],calls=[];
  const element=()=>({textContent:'',innerHTML:'',value:'',disabled:false,style:{},width:100,height:200,
-  classList:{add(){},remove(){},contains(){return false;}},append(){},replaceChildren(){},getContext(){return {fillRect(){}}}});
+  classList:{add(){},remove(){},toggle(){},contains(){return false;}},append(){},replaceChildren(){},getContext(){return {fillRect(){}}}});
  const querySelector=s=>{if(!nodes.has(s))nodes.set(s,element());return nodes.get(s);};
  const context=vm.createContext({console,URL,Date,Map,Set,Math,Number,String,Promise,JSON,
   document:{querySelector,createElement:element,addEventListener(){},visibilityState:'visible'},
@@ -86,5 +86,25 @@ await test('Hidden-tab heartbeat advances gravity; NEXT resets visible statistic
  assert.equal(c.run('game.score'),1);
  c.nodes.get('#score').textContent='500';c.run('prepareNextBattle({battle_no:2})');
  assert.equal(c.nodes.get('#score').textContent,'0');assert.equal(c.nodes.get('#level').textContent,'1');
+});
+await test('RC2 distinguishes login, room state and persistent CREATE result',async()=>{
+ const c=client('host39.js');await settle();
+ assert.match(c.nodes.get('#hostAuthStatus').textContent,/HOSTログイン済み/);
+ assert.match(c.nodes.get('#roomStatus').textContent,/部屋作成済み/);
+ assert.equal(c.nodes.get('#createBtn').disabled,true);
+ c.context.rpc=async()=>({...baseView(),room_exists:false,match:null});await c.run("act('VIEW')");
+ assert.match(c.nodes.get('#roomStatus').textContent,/部屋未作成/);assert.equal(c.nodes.get('#createBtn').disabled,false);
+ c.context.rpc=async()=>({...baseView(),action_result:'CREATED'});await c.run("act('CREATE')");
+ const message=c.nodes.get('#hostStatus').textContent;assert.match(message,/部屋を作成しました/);
+ await c.run("act('VIEW')");assert.equal(c.nodes.get('#hostStatus').textContent,message);
+ c.context.rpc=async()=>{throw Error('この部屋は既に存在します');};await c.run("act('CREATE')");
+ c.context.rpc=async()=>baseView();await c.run("act('VIEW')");assert.match(c.nodes.get('#hostStatus').textContent,/既に存在/);
+});
+await test('RC2 entry change is disabled while populated; READY failure is central and retryable',async()=>{
+ const h=client('host39.js');await settle();h.context.rpc=async()=>({...baseView(),players:[['a','A',true,true,0,null]]});
+ await h.run("act('VIEW')");assert.equal(h.nodes.get('#changeEntryBtn').disabled,true);
+ const c=client();c.run("client.join=async()=>{throw Error('入室コードを確認してください')}");
+ await c.nodes.get('#joinBtn').onclick();assert.equal(c.nodes.get('#entryError').hidden,false);
+ assert.equal(c.nodes.get('#entryError').textContent,'入室コードを確認してください');assert.equal(c.nodes.get('#joinBtn').disabled,false);
 });
 writeFileSync(new URL('./clients39-results.json',import.meta.url),JSON.stringify({passed:results.length,results},null,2));

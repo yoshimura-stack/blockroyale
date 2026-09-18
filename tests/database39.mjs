@@ -11,6 +11,7 @@ create function auth.uid() returns uuid language sql as $$ select nullif(current
 grant usage on schema public to anon,authenticated;
 create table public.legacy_sentinel(v text);insert into public.legacy_sentinel values('untouched');`);
 await db.exec(sql);
+await db.exec(readFileSync(new URL('../supabase/migrations/20260917063330_room_entry_management.sql',import.meta.url),'utf8'));
 const host=randomUUID(),entry='a-test-code-123456',room='TEST39';
 async function admin(q,args=[]){await db.exec('reset role');return db.query(q,args);}
 async function as(role,method,args){

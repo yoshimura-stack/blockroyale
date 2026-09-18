@@ -1,6 +1,6 @@
 // Node 22+. Optional synthetic backend test. Never uses or resets CONFIG.ROOM_CODE.
 // Creates a NEW BR39-LOAD-* room, writes test participants, then resets ONLY that room.
-import {CONFIG} from '../js/config.js';
+import {CONFIG} from '../public/js/config.js';
 import {randomUUID} from 'node:crypto';
 import {writeFileSync} from 'node:fs';
 const local=process.argv.includes('--local');

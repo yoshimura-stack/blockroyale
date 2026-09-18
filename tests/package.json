@@ -2,7 +2,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node database39.mjs && node clients39.mjs"
+    "test": "node database39.mjs && node clients39.mjs && node entry39.mjs && node assets39.mjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "0.5.8"

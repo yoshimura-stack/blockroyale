@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BLOCK ROYALE — HOST</title>
+  <link rel="stylesheet" href="./css/app.css">
+</head>
+<body class="visual-host">
+  <main class="admin-shell">
+    <section class="admin-card glass">
+      <div class="eyebrow">HOST CONTROL</div>
+      <h1>BLOCK ROYALE</h1>
+      <p>v0.39 RC2 / ROOM <b id="hostRoom"></b></p>
+      <form id="loginForm" class="admin-actions">
+        <input id="email" type="email" autocomplete="username" placeholder="HOSTメール" required>
+        <input id="password" type="password" autocomplete="current-password" placeholder="パスワード" required>
+        <button id="loginBtn" class="btn primary">HOSTログイン</button>
+        <button id="logoutBtn" class="btn" type="button">ログアウト</button>
+      </form>
+      <p id="hostAuthStatus" class="host-state" role="status">HOST未ログイン</p>
+      <p id="roomStatus" class="host-state" role="status">ROOM未接続</p>
+      <label for="newEntry">参加者に配る入室コード（12〜160文字）</label>
+      <div class="admin-actions"><input id="newEntry" type="password" autocomplete="off" minlength="12" maxlength="160" placeholder="設定する入室コード"><label><input id="showEntry" type="checkbox">入力したコードを表示</label></div>
+      <div class="admin-actions"><button id="createBtn" class="btn">部屋を新規作成</button><button id="changeEntryBtn" class="btn">入室コードを変更</button></div>
+      <p class="small">既存の部屋は再作成しません。コード変更はLOBBY・参加者0人のときのみ可能です。保存済みコードは表示できません。RESETしても入室コードは変わりません。</p>
+      <p id="hostStatus" class="action-message" role="status" aria-live="polite"></p>
+      <div class="admin-stats">
+        <div><span>READY</span><b id="readyCount">0</b></div>
+        <div><span>ALIVE</span><b id="aliveCount">0</b></div>
+        <div><span>PHASE</span><b id="phase">LOBBY</b></div>
+      </div>
+      <div class="admin-actions">
+        <button id="startBtn" class="btn primary">BATTLE START</button>
+        <button id="nextBtn" class="btn">NEXT BATTLE</button>
+        <button id="resetBtn" class="btn danger">EMERGENCY RESET</button>
+      </div>
+      <p class="small">再読み込みでは試合を維持します。全員を退室させるときはEMERGENCY RESETを使ってください。開始は8秒前から予告します。</p>
+    </section>
+    <section class="admin-card glass">
+      <div class="panel-title">PLAYERS</div>
+      <div id="players" class="player-list"></div>
+    </section>
+  </main>
+  <script type="module" src="./js/host39.js"></script>
+  <script type="module" src="./js/ambient.js"></script>
+</body>
+</html>

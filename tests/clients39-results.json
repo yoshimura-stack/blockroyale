@@ -1,5 +1,5 @@
 {
-  "passed": 9,
+  "passed": 11,
   "results": [
     "HOST initial load/F5 only calls VIEW; destructive commands require explicit action",
     "Missed countdown is recovered from server BATTLE state",
@@ -9,6 +9,8 @@
     "Garbage landing remains compact and translucent (v0.38 CSS preserved)",
     "Transport retries identical sequence/attack IDs and preserves newer ACK changes",
     "Transport refuses concurrent pump; no game callback causes database fanout",
-    "Hidden-tab heartbeat advances gravity; NEXT resets visible statistics"
+    "Hidden-tab heartbeat advances gravity; NEXT resets visible statistics",
+    "RC2 distinguishes login, room state and persistent CREATE result",
+    "RC2 entry change is disabled while populated; READY failure is central and retryable"
   ]
 }

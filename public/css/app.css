@@ -1,0 +1,2218 @@
+:root{
+  --bg:#050608; --panel:rgba(18,21,27,.72); --line:rgba(255,255,255,.11);
+  --text:#f6f7fb; --muted:#9ca3af; --gold:#f0c66a; --danger:#ff4d67;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:
+radial-gradient(circle at 50% -20%,#253044 0,#0b0e14 34%,#050608 70%);
+color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{min-height:100vh}
+.glass{background:var(--panel);border:1px solid var(--line);box-shadow:0 24px 70px rgba(0,0,0,.35);backdrop-filter:blur(18px)}
+.eyebrow{font-size:11px;letter-spacing:.22em;color:var(--gold);font-weight:800}
+.btn{appearance:none;border:1px solid var(--line);background:#151922;color:#fff;border-radius:14px;padding:13px 18px;font-weight:800;cursor:pointer;text-decoration:none}
+.btn.primary{background:linear-gradient(135deg,#f4d17d,#a87922);color:#111;border:0}
+.btn.danger{background:#3a1118;color:#ff9eac}
+.small{font-size:12px;color:var(--muted);line-height:1.7}
+.landing{display:grid;place-items:center;padding:30px}
+.landing-card{width:min(720px,100%);padding:48px;border-radius:28px;text-align:center}
+.landing h1{font-size:clamp(58px,12vw,120px);line-height:.76;margin:28px 0 20px;letter-spacing:-.07em}
+.landing h1 span{color:var(--gold)}
+.landing-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:30px 0}
+
+.topbar{height:78px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;border-bottom:1px solid var(--line)}
+.top-stats{display:flex;gap:28px}.top-stats div,.stat-stack div{display:grid;gap:2px}
+.top-stats span,.stat-stack span{font-size:10px;color:var(--muted);letter-spacing:.12em}.top-stats b{font-size:20px}
+.game-layout{height:calc(100vh - 78px);display:grid;grid-template-columns:minmax(330px,390px) minmax(300px,480px) minmax(330px,390px);gap:12px;justify-content:center;padding:12px 18px}
+.side-panel{border-radius:22px;padding:18px;min-height:0}
+.panel-title{font-size:11px;letter-spacing:.18em;color:var(--muted);font-weight:800}
+.gap{margin-top:28px}
+#nextCanvas{width:100%;height:auto;max-height:92px;margin:8px 0 10px;background:rgba(0,0,0,.18);border-radius:14px}
+.stat-stack{display:grid;gap:12px}.stat-stack b{font-size:24px}
+.controls{display:grid;gap:12px;margin-top:28px}.controls div{display:flex;align-items:center;gap:6px}.controls span{font-size:10px;color:var(--muted);margin-left:5px}
+kbd{min-width:29px;padding:6px 8px;border-radius:7px;background:#222833;border:1px solid #3a4250;text-align:center;box-shadow:inset 0 -2px 0 rgba(0,0,0,.4)}
+.board-wrap{display:grid;place-items:center;min-height:0}
+.board-frame{position:relative;height:min(calc(100vh - 114px),800px);aspect-ratio:1/2;border-radius:18px;overflow:hidden;border:1px solid rgba(240,198,106,.35);box-shadow:0 0 60px rgba(240,198,106,.08),0 28px 70px rgba(0,0,0,.5)}
+#board{width:100%;height:100%;display:block;background:linear-gradient(#0a0d13,#05070a)}
+.overlay{position:absolute;inset:0;display:grid;place-items:center;background:rgba(3,5,8,.72);z-index:5}
+.overlay.hidden{display:none}.overlay-card{width:82%;padding:28px;border-radius:20px;text-align:center}
+.overlay-card h2{font-size:34px;margin:10px 0 20px}.overlay-card input{width:100%;padding:14px;border-radius:12px;border:1px solid var(--line);background:#090c11;color:#fff;font-size:16px;margin-bottom:12px}
+.center-fx{pointer-events:none;position:absolute;inset:0;display:grid;place-items:center;z-index:4;font-size:clamp(28px,5vw,52px);font-weight:950;text-align:center;text-shadow:0 4px 24px #000}
+.center-fx.show{animation:fxPop .8s ease both}@keyframes fxPop{0%{opacity:0;transform:scale(.65)}25%{opacity:1;transform:scale(1.08)}75%{opacity:1}100%{opacity:0;transform:scale(1)}}
+.incoming-box{margin-top:14px;border:1px solid var(--line);border-radius:18px;padding:20px;text-align:center;background:rgba(255,77,103,.06)}
+.incoming-box strong{font-size:54px;display:block}.incoming-box span{font-size:11px;letter-spacing:.18em;color:var(--danger)}.incoming-box small{display:block;margin-top:8px;color:var(--muted)}
+.status-pill{margin-top:12px;padding:12px;border-radius:12px;background:#111722;font-weight:900;text-align:center}
+.combo-readout{font-size:28px;font-weight:950;margin-top:18px;text-align:center;color:var(--gold)}
+
+.admin-shell{max-width:1000px;margin:auto;padding:30px;display:grid;gap:18px}.admin-card{border-radius:24px;padding:28px}
+.admin-card h1{font-size:48px;margin:8px 0 24px}.admin-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.admin-stats div{background:#0b0f15;border-radius:16px;padding:18px}.admin-stats span{display:block;font-size:10px;color:var(--muted)}.admin-stats b{font-size:26px}
+.admin-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}.player-list{display:grid;gap:8px;margin-top:14px}.player-row{display:flex;justify-content:space-between;padding:12px 14px;background:#0b0f15;border-radius:12px}
+.projector-body{overflow:hidden}.projector-shell{padding:28px;height:100vh;display:grid;grid-template-rows:auto 1fr auto;gap:18px}.projector-header{display:flex;justify-content:space-between;align-items:center}.projector-header h1{font-size:46px;margin:0}.alive-big{text-align:right}.alive-big span{display:block;color:var(--muted);font-size:11px}.alive-big b{font-size:56px;color:var(--gold)}
+.projector-hero{border-radius:28px;display:grid;place-items:center;align-content:center;text-align:center}.projector-hero div{font-size:18px;color:var(--muted)}.projector-hero strong{font-size:clamp(64px,12vw,150px);letter-spacing:-.06em}.projector-hero small{font-size:24px;color:var(--gold)}
+.leaderboard{border-radius:22px;padding:18px}.leaderboard #ranking{display:flex;gap:10px;overflow:hidden;margin-top:10px}.rank-chip{padding:10px 14px;background:#0b0f15;border-radius:12px;white-space:nowrap}
+@media(max-width:900px){.game-layout{grid-template-columns:1fr;height:auto}.board-frame{height:auto;width:min(92vw,430px)}.side-panel{width:min(92vw,430px);margin:auto}.topbar{padding:0 12px}.top-stats{gap:12px}.controls{display:none}}
+
+.gap-sm{margin-top:14px}.mini-stack{display:grid;gap:10px;margin-top:8px}.mini-card{display:grid;grid-template-columns:minmax(0,1fr) 126px;grid-template-rows:auto 1fr;gap:10px 14px;min-height:210px;padding:14px;border-radius:17px;border:1px solid rgba(255,255,255,.08);background:rgba(5,8,12,.62);transition:border-color .18s ease,transform .18s ease,box-shadow .18s ease}.mini-card.hit{animation:miniHit .48s ease}@keyframes miniHit{0%{transform:scale(1)}35%{transform:scale(1.025);border-color:#ff5b73;box-shadow:0 0 30px rgba(255,77,103,.28)}100%{transform:scale(1)}}.mini-head{grid-column:1;display:flex;justify-content:space-between;gap:8px;align-items:flex-start;min-width:0}.mini-head>div:first-child{min-width:0}.mini-label{display:block;font-size:9px;letter-spacing:.13em;color:var(--gold);font-weight:900;margin-bottom:3px}.mini-head strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:16px}.mini-meta{text-align:right;white-space:nowrap}.mini-meta b{display:block;font-size:15px}.mini-meta small{display:block;font-size:9px;color:var(--muted);margin-top:3px}.mini-board{grid-column:2;grid-row:1 / span 2;width:126px;height:252px;border-radius:10px;background:#05070a;border:1px solid rgba(255,255,255,.08)}.mini-event{align-self:end;grid-column:1;font-size:9px;font-weight:900;color:var(--gold);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.danger-text{color:#ff7589}.compact-stats{grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.compact-stats div{padding:8px;border-radius:10px;background:rgba(0,0,0,.18)}.compact-stats b{font-size:18px}.compact-controls{grid-template-columns:1fr 1fr;gap:7px 8px;margin-top:12px}.compact-controls div{gap:4px}.compact-controls span{font-size:8px}.compact-controls kbd{min-width:24px;padding:4px 6px}.status-row{display:grid;grid-template-columns:1fr auto;align-items:end;gap:10px}.status-row .combo-readout{font-size:17px;margin:0 0 8px;min-width:68px}.status-row .status-pill{padding:9px;font-size:12px}.side-panel{overflow:auto;scrollbar-width:none}.side-panel::-webkit-scrollbar{display:none}@media(max-height:900px) and (min-width:901px){.side-panel{padding:12px}.mini-card{min-height:168px;grid-template-columns:minmax(0,1fr) 104px;padding:10px}.mini-board{width:104px;height:208px}#nextCanvas{max-height:72px}.compact-controls{margin-top:6px}.compact-stats{margin-top:6px}}.mini-card{min-height:112px;grid-template-columns:1fr 62px;padding:8px}.mini-board{width:62px;height:124px}#nextCanvas{max-height:96px}.compact-controls{margin-top:8px}.compact-stats{margin-top:8px}}
+
+
+@media(min-width:1500px){
+  .game-layout{grid-template-columns:minmax(360px,420px) minmax(340px,500px) minmax(360px,420px);gap:16px}
+  .mini-card{grid-template-columns:minmax(0,1fr) 140px}
+  .mini-board{width:140px;height:280px}
+}
+
+
+/* ===== V0.6 HUD REBALANCE ===== */
+.game-layout{
+  height:calc(100vh - 78px);
+  display:grid;
+  grid-template-columns:minmax(360px,420px) minmax(340px,430px) minmax(360px,420px);
+  gap:18px;
+  justify-content:center;
+  align-items:stretch;
+  padding:12px 22px 16px;
+}
+.side-panel{border-radius:22px;padding:16px;min-height:0;overflow:hidden}
+.side-left,.side-right{display:flex;flex-direction:column}
+.left-top-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:12px;align-items:stretch;flex:0 0 auto}
+.quick-stats{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr;gap:8px}
+.quick-stat{min-height:62px;padding:10px 12px;border-radius:12px;background:rgba(5,8,12,.64);border:1px solid rgba(255,255,255,.055)}
+.quick-stat span{display:block;font-size:9px;letter-spacing:.12em;color:var(--muted);font-weight:800}
+.quick-stat b{display:block;margin-top:4px;font-size:22px}
+.mini-controls{grid-column:1 / span 2;display:grid;grid-template-columns:1fr 1fr;gap:6px 8px;margin:0;padding:8px 10px;border-radius:12px;background:rgba(5,8,12,.42)}
+.mini-controls div{display:flex;align-items:center;gap:5px}
+.mini-controls span{font-size:8px;color:var(--muted);margin-left:3px}
+.mini-controls kbd{min-width:24px;padding:4px 6px}
+.next-box{min-width:0;padding:10px;border-radius:14px;background:rgba(5,8,12,.5);border:1px solid rgba(255,255,255,.055);display:flex;flex-direction:column}
+#nextCanvas{display:block;width:160px;height:120px;max-width:100%;max-height:none;aspect-ratio:4/3;object-fit:contain;margin:4px auto 0;background:rgba(0,0,0,.18);border-radius:12px;flex:1 0 auto}
+.section-heading{margin:14px 0 8px;font-size:13px;letter-spacing:.16em;color:var(--muted);font-weight:900}
+.large-stack{display:grid;grid-template-rows:1fr 1fr;gap:12px;flex:1 1 auto;min-height:0}
+.large-mini-card{display:grid;grid-template-columns:minmax(0,1fr) minmax(112px,138px);align-items:stretch;gap:14px;min-height:0;padding:14px;border-radius:17px;border:1px solid rgba(255,255,255,.08);background:rgba(5,8,12,.62)}
+.large-mini-card .mini-copy{display:flex;flex-direction:column;min-width:0}
+.large-mini-card .mini-label{font-size:9px;letter-spacing:.13em;color:var(--gold);font-weight:900}
+.large-mini-card .mini-copy>strong{display:block;margin-top:6px;font-size:18px;line-height:1.08;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini-inline-meta{display:flex;align-items:baseline;gap:9px;margin-top:8px}
+.mini-inline-meta b{font-size:17px}
+.mini-inline-meta small{font-size:9px;color:var(--muted)}
+.large-mini-card .mini-board{grid-column:2;grid-row:1;align-self:center;justify-self:end;display:block;width:120px;height:240px;max-height:100%;aspect-ratio:1/2;border-radius:10px;background:#05070a;border:1px solid rgba(255,255,255,.08)}
+.large-mini-card .mini-event{margin-top:auto;padding-top:10px;font-size:10px;font-weight:900;letter-spacing:.04em;color:var(--gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.large-mini-card .danger-text{color:#ff7589}
+.compact-incoming{margin-top:8px;padding:14px;flex:0 0 auto}
+.compact-incoming strong{font-size:44px}
+.status-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;margin-top:12px;flex:0 0 auto}
+.status-area .panel-title{margin-bottom:6px}
+.status-row .status-pill{margin:0;padding:9px 12px}
+.status-row .combo-readout{margin:0 6px 8px 0;min-width:54px;font-size:18px}
+.board-frame{height:min(calc(100vh - 106px),800px)}
+
+@media(min-width:1600px){
+  .game-layout{grid-template-columns:minmax(390px,455px) minmax(350px,440px) minmax(390px,455px);gap:20px}
+  .large-mini-card{grid-template-columns:minmax(0,1fr) 140px;padding:16px}
+  .large-mini-card .mini-board{width:140px;height:280px}
+}
+@media(max-height:850px) and (min-width:1001px){
+  .game-layout{grid-template-columns:minmax(340px,400px) minmax(320px,405px) minmax(340px,400px);gap:14px;padding-top:8px}
+  .side-panel{padding:12px}
+  .left-top-grid{gap:8px}
+  .quick-stat{min-height:50px;padding:7px 9px}
+  .quick-stat b{font-size:18px}
+  .mini-controls{padding:6px 8px}
+  #nextCanvas{width:130px;height:98px}
+  .section-heading{margin:9px 0 6px}
+  .large-stack{gap:8px}
+  .large-mini-card{grid-template-columns:minmax(0,1fr) 104px;padding:10px}
+  .large-mini-card .mini-board{width:104px;height:208px}
+  .large-mini-card .mini-copy>strong{font-size:15px}
+  .compact-incoming{padding:10px}
+  .compact-incoming strong{font-size:38px}
+}
+@media(max-width:1100px){
+  .game-layout{grid-template-columns:1fr;height:auto}
+  .board-frame{height:auto;width:min(92vw,430px)}
+  .side-panel{width:min(92vw,520px);margin:auto;overflow:visible}
+}
+
+/* ===== V0.7 START COUNTDOWN ===== */
+.countdown-overlay{
+  position:absolute;inset:0;z-index:20;display:grid;place-items:center;
+  background:radial-gradient(circle at 50% 42%,rgba(240,198,106,.13),transparent 36%),rgba(3,5,8,.78);
+  backdrop-filter:blur(3px)
+}
+.countdown-overlay.hidden{display:none}
+.countdown-inner{text-align:center;transform:translateY(-2%)}
+.countdown-eyebrow{font-size:14px;letter-spacing:.28em;color:var(--gold);font-weight:900;margin-bottom:8px}
+.countdown-number{
+  font-size:clamp(110px,18vw,220px);line-height:.85;font-weight:1000;letter-spacing:-.07em;
+  text-shadow:0 10px 50px rgba(0,0,0,.55)
+}
+.countdown-number.pulse{animation:countPulse .72s ease both}
+.countdown-sub{margin-top:18px;font-size:13px;letter-spacing:.22em;color:#d8dbe1;font-weight:800}
+.countdown-overlay.go .countdown-number{font-size:clamp(72px,11vw,130px);color:var(--gold);letter-spacing:-.04em}
+@keyframes countPulse{
+  0%{opacity:0;transform:scale(.62)}
+  35%{opacity:1;transform:scale(1.08)}
+  100%{opacity:1;transform:scale(1)}
+}
+
+
+/* ===== V0.8 MINI BOARD FIT FIX ===== */
+
+/* Each RIVAL/BATTLE card must own its contents completely. */
+.large-mini-card{
+  overflow:hidden;
+  min-height:0;
+  box-sizing:border-box;
+}
+
+/* Keep the 10x20 board ratio, but never allow it to exceed the card height. */
+.large-mini-card .mini-board{
+  display:block;
+  width:auto !important;
+  height:100% !important;
+  max-height:100% !important;
+  max-width:138px !important;
+  aspect-ratio:1 / 2;
+  justify-self:end;
+  align-self:stretch;
+  object-fit:contain;
+  box-sizing:border-box;
+}
+
+/* The copy column must also be allowed to shrink cleanly. */
+.large-mini-card .mini-copy{
+  min-height:0;
+  overflow:hidden;
+}
+
+/* Prevent the two-card grids from expanding beyond their panel. */
+.large-stack{
+  min-height:0;
+  overflow:hidden;
+}
+
+.side-left .large-stack,
+.side-right .large-stack{
+  flex:1 1 0;
+}
+
+/* On shorter screens, reduce mini-board ceiling rather than letting it escape. */
+@media(max-height:900px) and (min-width:1001px){
+  .large-mini-card .mini-board{
+    max-width:116px !important;
+  }
+}
+
+@media(max-height:780px) and (min-width:1001px){
+  .large-mini-card .mini-board{
+    max-width:96px !important;
+  }
+  .large-mini-card{
+    padding:9px;
+    gap:10px;
+  }
+  .section-heading{
+    margin:7px 0 5px;
+  }
+}
+
+/* If the viewport becomes too tight, allow the side panel itself to scroll
+   instead of letting a canvas visually spill outside a card. */
+@media(max-height:700px) and (min-width:1001px){
+  .side-panel{
+    overflow:auto;
+    scrollbar-width:none;
+  }
+  .side-panel::-webkit-scrollbar{display:none}
+}
+
+/* ===== V0.13 BATTLE TOAST ===== */
+.battle-toast{
+  position:absolute;
+  left:50%;
+  top:42%;
+  transform:translate(-50%,-50%);
+  z-index:30;
+  width:min(82%,360px);
+  padding:18px 22px 20px;
+  border-radius:20px;
+  text-align:center;
+  pointer-events:none;
+  background:rgba(8,11,17,.92);
+  border:1px solid rgba(255,255,255,.13);
+  box-shadow:0 24px 70px rgba(0,0,0,.55),0 0 40px rgba(240,198,106,.10);
+  backdrop-filter:blur(12px);
+}
+.battle-toast.hidden{display:none}
+.battle-toast.outgoing{
+  border-color:rgba(240,198,106,.65);
+  box-shadow:0 24px 70px rgba(0,0,0,.55),0 0 44px rgba(240,198,106,.24);
+}
+.battle-toast.incoming{
+  border-color:rgba(255,77,103,.72);
+  box-shadow:0 24px 70px rgba(0,0,0,.55),0 0 50px rgba(255,77,103,.30);
+}
+.battle-toast-label{
+  font-size:11px;
+  letter-spacing:.22em;
+  font-weight:950;
+  color:var(--gold);
+}
+.battle-toast.incoming .battle-toast-label{color:#ff7187}
+.battle-toast-main{
+  margin-top:7px;
+  font-size:clamp(28px,4vw,42px);
+  font-weight:1000;
+  line-height:1.05;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.battle-toast-sub{
+  margin-top:7px;
+  font-size:18px;
+  font-weight:900;
+  color:var(--gold);
+}
+.battle-toast.incoming .battle-toast-sub{color:#ff7187}
+.battle-toast.show{animation:battleToastPop 1.45s ease both}
+@keyframes battleToastPop{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.72)}
+  14%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}
+  28%{transform:translate(-50%,-50%) scale(1)}
+  78%{opacity:1}
+  100%{opacity:0;transform:translate(-50%,-54%) scale(.98)}
+}
+
+/* ===== V0.14 RESULT SPLASH ===== */
+.result-overlay{
+  position:absolute;
+  inset:0;
+  z-index:40;
+  display:grid;
+  place-items:center;
+  padding:18px;
+  background:
+    radial-gradient(circle at 50% 35%,rgba(240,198,106,.18),transparent 36%),
+    rgba(3,5,8,.88);
+  backdrop-filter:blur(5px);
+}
+.result-overlay.hidden{display:none}
+.result-card{
+  width:min(88%,390px);
+  padding:28px 24px 24px;
+  border-radius:24px;
+  text-align:center;
+  border:1px solid rgba(240,198,106,.48);
+  background:rgba(12,15,21,.96);
+  box-shadow:0 30px 90px rgba(0,0,0,.65),0 0 70px rgba(240,198,106,.15);
+  animation:resultPop .7s cubic-bezier(.2,.9,.25,1.1) both;
+}
+.result-kicker{
+  font-size:11px;
+  letter-spacing:.24em;
+  color:var(--gold);
+  font-weight:900;
+}
+.result-title{
+  margin-top:10px;
+  font-size:clamp(44px,7vw,76px);
+  line-height:.95;
+  font-weight:1000;
+  letter-spacing:-.05em;
+}
+.result-name{
+  margin-top:16px;
+  font-size:clamp(28px,4vw,44px);
+  font-weight:1000;
+  color:var(--gold);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.result-score{
+  margin-top:10px;
+  font-size:16px;
+  font-weight:850;
+  color:#f5f6f8;
+}
+.result-rank{
+  margin-top:8px;
+  font-size:13px;
+  color:var(--muted);
+  font-weight:800;
+}
+.result-foot{
+  margin-top:22px;
+  font-size:10px;
+  letter-spacing:.08em;
+  color:var(--muted);
+}
+.result-overlay.loser .result-card{
+  border-color:rgba(255,255,255,.15);
+  box-shadow:0 30px 90px rgba(0,0,0,.65);
+}
+.result-overlay.loser .result-title{font-size:42px}
+.result-overlay.loser .result-name{color:#fff}
+@keyframes resultPop{
+  0%{opacity:0;transform:scale(.72) translateY(16px)}
+  65%{opacity:1;transform:scale(1.04) translateY(0)}
+  100%{opacity:1;transform:scale(1)}
+}
+
+/* V0.15 Japanese-first battle HUD */
+.large-mini-card .mini-label{white-space:normal;line-height:1.35;letter-spacing:.04em;font-size:9px}
+.section-heading{letter-spacing:.06em}
+.battle-toast-label{letter-spacing:.06em;font-size:12px}
+.battle-toast-sub{font-size:17px}
+
+
+/* ===== V0.17 RESPONSIVE PLAYER HUD ===== */
+:root{--br-header-h:72px;--br-gap:14px}
+html,body{min-height:100%}
+body{overflow:hidden}
+
+.game-layout{
+  width:100%;height:calc(100vh - var(--br-header-h));max-width:none;margin:0 auto;
+  padding:10px 14px 12px;display:grid;
+  grid-template-columns:minmax(280px,.95fr) minmax(300px,.92fr) minmax(280px,.95fr);
+  gap:var(--br-gap);align-items:stretch;justify-content:center;box-sizing:border-box;overflow:hidden
+}
+.side-panel{height:100%;min-height:0;overflow:hidden}
+.side-left,.side-right{display:flex;flex-direction:column;min-height:0}
+.board-wrap{min-width:0;min-height:0;height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.board-frame{
+  position:relative;height:min(100%,calc((100vw - 620px)*1.95));width:auto;max-height:100%;max-width:100%;
+  aspect-ratio:1/2;margin:0 auto;flex:0 1 auto
+}
+#boardCanvas{display:block;width:100%;height:100%;aspect-ratio:1/2}
+
+.left-top-grid{flex:0 0 auto;min-height:0;gap:8px}
+.quick-stats{gap:6px}
+.quick-stat{min-height:48px;padding:7px 9px}
+.quick-stat span{font-size:8px}
+.quick-stat b{font-size:18px}
+.mini-controls{padding:6px 8px;gap:5px 6px}
+.mini-controls span{font-size:7px}
+.mini-controls kbd{min-width:22px;padding:3px 5px}
+.next-box{padding:8px}
+#nextCanvas{width:min(130px,100%);height:auto;aspect-ratio:4/3;max-height:88px}
+
+.section-heading{flex:0 0 auto;margin:8px 0 6px;font-size:11px}
+.large-stack{
+  flex:1 1 0;min-height:0;overflow:hidden;display:grid;
+  grid-template-rows:minmax(0,1fr) minmax(0,1fr);gap:8px
+}
+.large-mini-card{
+  min-height:0;overflow:hidden;padding:9px 10px;
+  grid-template-columns:minmax(0,1fr) minmax(76px,32%);gap:10px
+}
+.large-mini-card .mini-copy{min-height:0}
+.large-mini-card .mini-copy>strong{font-size:14px}
+.large-mini-card .mini-label{font-size:8px}
+.mini-inline-meta{margin-top:5px;gap:6px}
+.mini-inline-meta b{font-size:13px}
+.mini-inline-meta small{font-size:8px}
+.large-mini-card .mini-board{
+  width:auto !important;height:100% !important;max-width:100% !important;max-height:100% !important;
+  aspect-ratio:1/2;align-self:stretch;justify-self:end
+}
+.large-mini-card .mini-event{font-size:9px;padding-top:6px}
+
+.compact-incoming{margin-top:6px;padding:9px}
+.compact-incoming strong{font-size:36px}
+.compact-incoming span,.compact-incoming small{font-size:9px}
+.status-row{margin-top:8px;gap:7px}
+.status-row .status-pill{padding:7px 8px;font-size:10px}
+.status-row .combo-readout{font-size:14px;margin-bottom:6px}
+
+@media (max-width:1500px), (max-height:860px){
+  :root{--br-header-h:68px;--br-gap:10px}
+  .game-layout{
+    grid-template-columns:minmax(235px,.88fr) minmax(260px,.82fr) minmax(235px,.88fr);
+    padding:8px 10px 10px
+  }
+  .side-panel{padding:10px}
+  .board-frame{height:min(100%,calc((100vw - 510px)*1.98))}
+  .left-top-grid{grid-template-columns:1fr .9fr}
+  .large-mini-card{grid-template-columns:minmax(0,1fr) minmax(68px,30%);padding:8px;gap:8px}
+  #nextCanvas{max-height:76px}
+}
+
+@media (max-width:1150px) and (min-width:760px){
+  body{overflow:hidden}
+  .game-layout{
+    grid-template-columns:minmax(200px,.8fr) minmax(220px,.76fr) minmax(200px,.8fr);
+    gap:8px;padding:6px 8px 8px
+  }
+  .side-panel{padding:8px;border-radius:16px}
+  .left-top-grid{grid-template-columns:1fr}
+  .next-box{display:none}
+  .quick-stats{grid-template-columns:1fr 1fr}
+  .mini-controls{grid-column:1/span 2}
+  .section-heading{font-size:10px;margin:6px 0 5px}
+  .large-mini-card{grid-template-columns:minmax(0,1fr) minmax(58px,30%);padding:7px;gap:6px}
+  .large-mini-card .mini-copy>strong{font-size:12px}
+  .large-mini-card .mini-label{font-size:7px}
+  .mini-inline-meta b{font-size:11px}
+  .mini-inline-meta small{font-size:7px}
+  .compact-incoming strong{font-size:30px}
+  .board-frame{height:min(100%,calc((100vw - 430px)*2))}
+}
+
+@media (max-width:759px){
+  body{overflow:auto}
+  .game-layout{
+    height:auto;min-height:calc(100vh - var(--br-header-h));
+    grid-template-columns:1fr;grid-template-areas:"board" "left" "right";overflow:visible
+  }
+  .board-wrap{grid-area:board;min-height:calc(100vh - var(--br-header-h) - 12px)}
+  .side-left{grid-area:left}
+  .side-right{grid-area:right}
+  .side-panel{height:auto;overflow:visible}
+  .board-frame{width:min(88vw,360px);height:auto;aspect-ratio:1/2}
+}
+
+/* ===== V0.18 OUTGOING TARGET EMPHASIS ===== */
+.battle-toast.outgoing .battle-toast-main{
+  font-size:clamp(30px,4.4vw,46px);
+  color:#fff;
+}
+.battle-toast.outgoing .battle-toast-label{
+  font-size:13px;
+  font-weight:1000;
+}
+.battle-toast.outgoing .battle-toast-sub{
+  font-size:18px;
+  font-weight:950;
+}
+
+/* ===== V0.21 ALL-SCREEN WINNER TAKEOVER ===== */
+.result-overlay{
+  inset:0 !important;
+  z-index:80 !important;
+  padding:10px !important;
+  background:
+    radial-gradient(circle at 50% 32%,rgba(240,198,106,.32),transparent 38%),
+    rgba(2,4,8,.94) !important;
+}
+.result-card{
+  width:94% !important;
+  min-height:72% !important;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  border-radius:28px !important;
+}
+.result-title{
+  font-size:clamp(52px,8vw,92px) !important;
+}
+.result-name{
+  margin-top:22px !important;
+  font-size:clamp(36px,6vw,68px) !important;
+}
+.result-score{
+  margin-top:16px !important;
+  font-size:clamp(18px,2.3vw,28px) !important;
+}
+.result-rank{
+  margin-top:12px !important;
+  font-size:clamp(14px,1.8vw,20px) !important;
+}
+
+/* ===== V0.22 CENTER ATTACK TARGET ===== */
+.center-fx strong{
+  display:inline-block;
+  margin:6px 0 4px;
+  font-size:1.18em;
+  color:var(--gold);
+  max-width:92%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.center-fx span{
+  display:inline-block;
+  margin-top:5px;
+  font-size:.48em;
+  letter-spacing:.03em;
+  color:#fff;
+}
+
+/* ===== V0.23 CENTER COMBAT ALERT ===== */
+.combat-alert{
+  position:absolute;
+  left:50%;
+  top:42%;
+  transform:translate(-50%,-50%);
+  z-index:55;
+  width:min(88%,420px);
+  padding:20px 22px 22px;
+  border-radius:22px;
+  text-align:center;
+  pointer-events:none;
+  background:rgba(7,10,16,.95);
+  border:1px solid rgba(255,255,255,.15);
+  box-shadow:0 28px 90px rgba(0,0,0,.68);
+  backdrop-filter:blur(12px);
+}
+.combat-alert.hidden{display:none}
+.combat-alert.outgoing{
+  border-color:rgba(240,198,106,.78);
+  box-shadow:0 28px 90px rgba(0,0,0,.68),0 0 52px rgba(240,198,106,.24);
+}
+.combat-alert.incoming{
+  border-color:rgba(255,77,103,.82);
+  box-shadow:0 28px 90px rgba(0,0,0,.68),0 0 58px rgba(255,77,103,.28);
+}
+.combat-alert.garbage-landing{
+  border-color:rgba(255,77,103,1);
+  background:rgba(34,8,14,.97);
+}
+.combat-alert-kicker{
+  font-size:12px;
+  font-weight:1000;
+  letter-spacing:.08em;
+  color:var(--gold);
+}
+.combat-alert.incoming .combat-alert-kicker,
+.combat-alert.garbage-landing .combat-alert-kicker{color:#ff7187}
+.combat-alert-name{
+  margin-top:7px;
+  font-size:clamp(30px,4.6vw,48px);
+  font-weight:1000;
+  line-height:1.05;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.combat-alert-main{
+  margin-top:10px;
+  font-size:clamp(18px,2.4vw,26px);
+  font-weight:950;
+}
+.combat-alert-sub{
+  margin-top:8px;
+  font-size:clamp(14px,2vw,20px);
+  font-weight:1000;
+  color:var(--gold);
+}
+.combat-alert.incoming .combat-alert-sub,
+.combat-alert.garbage-landing .combat-alert-sub{color:#ff7187}
+.combat-alert.pop{animation:combatAlertPop .24s ease-out both}
+@keyframes combatAlertPop{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.82)}
+  100%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+}
+
+
+/* v0.24: live leader panel replaces the redundant incoming pool. */
+.leader-box{margin-top:14px;border:1px solid var(--line);border-radius:18px;padding:16px 18px;background:linear-gradient(135deg,rgba(217,166,58,.12),rgba(255,255,255,.025));display:flex;align-items:center;gap:14px;min-height:104px}
+.leader-crown{font-size:34px;filter:drop-shadow(0 5px 14px rgba(217,166,58,.24))}
+.leader-copy{display:flex;flex-direction:column;min-width:0}
+.leader-copy strong{font-size:22px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.leader-copy span{margin-top:5px;font-size:13px;font-weight:800;color:#f1c65b;letter-spacing:.05em}
+.leader-copy small{margin-top:8px;font-size:12px;color:var(--muted);font-weight:700}
+@media(max-width:900px){.leader-box{min-height:82px;padding:12px}.leader-crown{font-size:28px}.leader-copy strong{font-size:18px}}
+
+
+/* ===== V0.25 PRACTICE MODE ===== */
+.practice-home{border-color:rgba(240,198,106,.72)!important;color:var(--gold)!important}
+.practice-page{min-height:100vh;overflow:hidden;background:radial-gradient(circle at 50% 12%,rgba(35,45,70,.28),transparent 32%),#05070a;color:#f4f6fb}
+.practice-header{height:68px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.10);background:rgba(6,9,14,.96)}
+.practice-header strong{display:block;margin-top:3px;font-size:18px;letter-spacing:.05em}
+.practice-header-actions{display:flex;gap:8px}
+.practice-small-btn{padding:9px 14px!important;font-size:12px!important}
+.practice-layout{height:calc(100vh - 68px);width:min(1500px,100%);margin:0 auto;padding:10px 14px 12px;display:grid;grid-template-columns:minmax(245px,.86fr) minmax(310px,.92fr) minmax(245px,.86fr);gap:12px;box-sizing:border-box}
+.practice-side{min-height:0;overflow:hidden;padding:14px;border-radius:20px;display:flex;flex-direction:column;gap:16px}
+.practice-control-row{display:grid;grid-template-columns:34px 34px 1fr;align-items:center;gap:6px;margin:8px 0}
+.practice-control-row kbd{min-width:30px;padding:6px 4px;text-align:center;border-radius:7px;border:1px solid rgba(255,255,255,.18);background:#1a2230;box-shadow:inset 0 1px rgba(255,255,255,.08);font-weight:900}
+.practice-control-row span{margin-left:5px;font-size:12px;color:#d6dbe5}
+.practice-note{margin:10px 0 0;font-size:10px;line-height:1.7;color:var(--muted)}
+.practice-score-panel{margin-top:auto;padding:14px;border:1px solid rgba(255,255,255,.08);border-radius:16px;background:rgba(3,6,10,.5)}
+.practice-score-big{margin-top:8px;font-size:clamp(44px,5vw,72px);line-height:1;font-weight:1000;letter-spacing:-.05em}
+.practice-score-label{margin-top:4px;font-size:10px;letter-spacing:.16em;color:var(--gold)}
+.practice-stats-grid{margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.practice-stats-grid>div{padding:10px;border-radius:10px;background:#080c12;border:1px solid rgba(255,255,255,.07)}
+.practice-stats-grid span{display:block;font-size:8px;color:var(--muted);letter-spacing:.08em}
+.practice-stats-grid strong{display:block;margin-top:4px;font-size:18px}
+.practice-board-wrap{min-width:0;min-height:0;height:100%;display:flex;align-items:center;justify-content:center}
+.practice-board-shell{position:relative;height:100%;max-height:100%;aspect-ratio:1/2;border:1px solid rgba(240,198,106,.43);border-radius:18px;overflow:hidden;background:#05070a;box-shadow:0 30px 90px rgba(0,0,0,.45)}
+#practiceBoard{display:block;width:100%;height:100%}
+.practice-overlay{position:absolute;inset:0;z-index:20;display:grid;place-items:center;padding:16px;background:rgba(3,5,9,.82);backdrop-filter:blur(5px)}
+.practice-overlay.hidden{display:none}
+.practice-start-card{width:min(88%,350px);padding:24px 22px;border-radius:20px;text-align:center;background:rgba(14,18,25,.96);border:1px solid rgba(255,255,255,.13);box-shadow:0 25px 80px rgba(0,0,0,.6)}
+.practice-start-card h1{margin:10px 0 8px;font-size:34px}
+.practice-start-card p{margin:0 0 18px;font-size:11px;line-height:1.7;color:var(--muted)}
+.practice-countdown{position:absolute;inset:0;z-index:30;display:grid;place-items:center;font-size:clamp(78px,12vw,140px);font-weight:1000;letter-spacing:-.06em;background:rgba(2,4,7,.58);text-shadow:0 0 60px rgba(240,198,106,.25)}
+.practice-countdown.hidden{display:none}
+.practice-result-score{margin-top:14px;font-size:24px;font-weight:950}
+.practice-result-best{margin:6px 0 18px;font-size:14px;color:var(--gold);font-weight:900}
+.practice-next-box{height:150px;display:grid;place-items:center;border-radius:14px;overflow:hidden;background:#070a0f;border:1px solid rgba(255,255,255,.07)}
+#practiceNext{max-width:100%;max-height:100%}
+.practice-mission{display:flex;flex-direction:column;gap:8px}
+.practice-tip{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:start;padding:10px;border-radius:12px;background:#080c12;border:1px solid rgba(255,255,255,.07)}
+.practice-tip>span{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:rgba(240,198,106,.13);color:var(--gold);font-size:10px;font-weight:950}
+.practice-tip strong{display:block;font-size:12px}
+.practice-tip small{display:block;margin-top:3px;color:var(--muted);font-size:9px;line-height:1.5}
+.practice-status{margin-top:auto;padding:12px 14px;border-radius:12px;background:#080c12;display:flex;align-items:center;justify-content:space-between}
+.practice-status span{font-size:9px;color:var(--muted)}
+.practice-status strong{color:var(--gold);font-size:13px}
+
+@media(max-width:1100px) and (min-width:760px){
+  .practice-layout{grid-template-columns:minmax(190px,.72fr) minmax(260px,.88fr) minmax(190px,.72fr);gap:8px;padding:8px}
+  .practice-side{padding:10px;gap:10px}.practice-note{display:none}.practice-next-box{height:110px}
+  .practice-tip{padding:7px;grid-template-columns:28px 1fr}.practice-tip>span{width:24px;height:24px}.practice-tip small{font-size:8px}
+  .practice-control-row{grid-template-columns:28px 28px 1fr}.practice-control-row kbd{min-width:24px;padding:4px 2px}
+}
+@media(max-width:759px){
+  .practice-page{overflow:auto}.practice-header{height:auto;min-height:68px;padding:10px 12px}.practice-header-actions{flex-direction:column}
+  .practice-layout{height:auto;grid-template-columns:1fr;grid-template-areas:"board" "left" "right"}
+  .practice-board-wrap{grid-area:board;height:auto}.practice-board-shell{width:min(90vw,390px);height:auto;aspect-ratio:1/2}
+  .practice-side{height:auto;overflow:visible}.practice-layout>.practice-side:first-child{grid-area:left}.practice-right{grid-area:right}
+}
+
+
+/* ===== V0.26 PRACTICE UX POLISH ===== */
+.practice-result-actions{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin-top:14px;
+}
+.practice-result-actions .btn{
+  width:100%;
+  justify-content:center;
+  box-sizing:border-box;
+}
+.practice-result-note{
+  margin:8px 0 0;
+  font-size:9px;
+  line-height:1.5;
+  color:var(--muted);
+}
+
+
+/* ===== V0.27 BOARD EDGE CLIP FIX ===== */
+
+/* The game board itself must stay perfectly rectangular.
+   Rounded corners were clipping blocks in the bottom-left / bottom-right cells. */
+.board-frame,
+.practice-board-shell{
+  border-radius:0 !important;
+  overflow:visible !important;
+}
+
+/* Canvas itself must never be clipped or rounded. */
+#boardCanvas,
+#practiceBoard{
+  border-radius:0 !important;
+  clip-path:none !important;
+}
+
+/* Keep a subtle outer frame without eating into playable cells. */
+.board-frame,
+.practice-board-shell{
+  box-shadow:
+    0 0 0 1px rgba(240,198,106,.42),
+    0 30px 90px rgba(0,0,0,.45);
+}
+
+/* Any parent wrapper around the board must also avoid clipping it. */
+.board-wrap,
+.practice-board-wrap{
+  overflow:visible !important;
+}
+
+
+/* ===== V0.28 NEON COSMOS / VISUAL PHASE 1 ===== */
+:root{
+  --void:#03050a;
+  --glass:rgba(10,15,25,.66);
+  --glass-strong:rgba(9,14,23,.82);
+  --line:rgba(153,200,255,.15);
+  --cyan:#74ddff;
+  --violet:#9c7bff;
+  --gold:#f0c66a;
+}
+
+body{
+  background:
+    radial-gradient(circle at 50% 20%,rgba(54,45,110,.18),transparent 34%),
+    radial-gradient(circle at 14% 34%,rgba(38,126,164,.12),transparent 30%),
+    linear-gradient(180deg,#050812 0%,#03050a 58%,#020306 100%) !important;
+}
+
+.ambient-canvas{
+  position:fixed;
+  inset:0;
+  z-index:-2;
+  width:100%;
+  height:100%;
+  pointer-events:none;
+}
+
+body::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.018),transparent 22%,rgba(0,0,0,.12)),
+    repeating-linear-gradient(180deg,rgba(255,255,255,.012) 0 1px,transparent 1px 4px);
+  mix-blend-mode:screen;
+  opacity:.42;
+}
+
+/* cinematic glass */
+.glass,
+.side-panel,
+.admin-card,
+.projector-hero,
+.leaderboard,
+.practice-side{
+  background:
+    linear-gradient(145deg,rgba(17,23,38,.76),rgba(6,10,18,.62)) !important;
+  border-color:rgba(151,198,255,.16) !important;
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.055),
+    0 22px 70px rgba(0,0,0,.38),
+    0 0 36px rgba(79,145,255,.035) !important;
+  backdrop-filter:blur(18px) saturate(125%);
+}
+
+/* holographic headers */
+.topbar,
+.practice-header,
+.projector-header{
+  background:linear-gradient(180deg,rgba(6,10,18,.84),rgba(5,8,14,.58)) !important;
+  border-bottom:1px solid rgba(122,187,255,.14) !important;
+  box-shadow:0 12px 40px rgba(0,0,0,.26);
+  backdrop-filter:blur(16px);
+}
+.eyebrow{
+  color:#f4ca70 !important;
+  text-shadow:0 0 18px rgba(240,198,106,.22);
+}
+
+/* main board = floating energy chamber */
+.board-frame,
+.practice-board-shell{
+  position:relative;
+  background:
+    linear-gradient(180deg,rgba(3,7,14,.90),rgba(2,5,10,.96)) !important;
+  border:0 !important;
+  box-shadow:
+    0 0 0 1px rgba(238,201,111,.42),
+    0 0 34px rgba(97,182,255,.10),
+    0 0 90px rgba(87,78,190,.08),
+    inset 0 0 55px rgba(67,120,184,.045),
+    0 34px 100px rgba(0,0,0,.48) !important;
+}
+.board-frame::before,
+.practice-board-shell::before{
+  content:"";
+  position:absolute;
+  inset:-1px;
+  pointer-events:none;
+  background:
+    linear-gradient(90deg,transparent,rgba(103,215,255,.20),transparent) top/100% 1px no-repeat,
+    linear-gradient(180deg,rgba(240,198,106,.25),transparent 14%,transparent 86%,rgba(103,215,255,.12));
+  z-index:3;
+}
+.board-frame::after,
+.practice-board-shell::after{
+  content:"";
+  position:absolute;
+  left:9%;
+  right:9%;
+  bottom:-18px;
+  height:30px;
+  border-radius:50%;
+  pointer-events:none;
+  background:radial-gradient(ellipse,rgba(88,181,255,.18),transparent 70%);
+  filter:blur(8px);
+}
+
+/* slimmer sci-fi side cards */
+.mini-card,
+.large-mini-card,
+.quick-stat,
+.next-box,
+.compact-incoming,
+.status-pill,
+.practice-tip,
+.practice-score-panel,
+.practice-next-box,
+.practice-status{
+  background:
+    linear-gradient(145deg,rgba(8,13,22,.76),rgba(3,7,13,.62)) !important;
+  border-color:rgba(129,191,255,.12) !important;
+  box-shadow:inset 0 1px rgba(255,255,255,.035);
+}
+.large-mini-card:hover{
+  border-color:rgba(128,204,255,.28) !important;
+}
+.panel-title,
+.section-heading{
+  color:rgba(208,225,245,.72) !important;
+}
+.mini-label{
+  color:#f0c66a !important;
+}
+
+/* HUD numerics */
+.top-stats b,
+.quick-stat b,
+.practice-score-big,
+.alive-big b{
+  text-shadow:
+    0 0 18px rgba(115,216,255,.12),
+    0 0 2px rgba(255,255,255,.2);
+}
+
+/* landing becomes a portal rather than a flat card */
+.landing{
+  display:grid;
+  place-items:center;
+  min-height:100vh;
+  overflow:hidden;
+}
+.landing-card{
+  position:relative;
+  overflow:hidden;
+  border-color:rgba(132,191,255,.19) !important;
+  box-shadow:
+    0 40px 130px rgba(0,0,0,.58),
+    0 0 90px rgba(79,130,255,.08) !important;
+}
+.landing-card::before{
+  content:"";
+  position:absolute;
+  width:420px;
+  height:420px;
+  left:50%;
+  top:45%;
+  transform:translate(-50%,-50%);
+  border:1px solid rgba(111,202,255,.10);
+  border-radius:50%;
+  box-shadow:
+    0 0 0 54px rgba(136,108,255,.025),
+    0 0 0 108px rgba(84,175,255,.018);
+  pointer-events:none;
+}
+.landing-card>*{position:relative;z-index:2}
+.landing h1{
+  text-shadow:0 0 55px rgba(120,158,255,.08);
+}
+.landing h1 span{
+  background:linear-gradient(180deg,#ffe7a0,#e9ae45);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+  filter:drop-shadow(0 0 24px rgba(240,198,106,.14));
+}
+.btn{
+  transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease,background .16s ease;
+}
+.btn:hover{
+  transform:translateY(-2px);
+  border-color:rgba(132,204,255,.34);
+  box-shadow:0 12px 26px rgba(0,0,0,.24),0 0 18px rgba(87,168,255,.08);
+}
+.btn.primary{
+  box-shadow:0 10px 28px rgba(240,198,106,.11);
+}
+
+/* combat overlays feel broadcast-grade */
+.combat-alert{
+  background:
+    radial-gradient(circle at 50% 0%,rgba(70,125,190,.12),transparent 42%),
+    rgba(5,9,16,.94) !important;
+  backdrop-filter:blur(18px) saturate(130%);
+}
+.combat-alert.outgoing{
+  box-shadow:
+    0 30px 100px rgba(0,0,0,.72),
+    0 0 75px rgba(240,198,106,.18) !important;
+}
+.combat-alert.incoming,
+.combat-alert.garbage-landing{
+  box-shadow:
+    0 30px 100px rgba(0,0,0,.72),
+    0 0 85px rgba(255,71,112,.20) !important;
+}
+
+/* winner = luminous event moment */
+.result-overlay{
+  background:
+    radial-gradient(circle at 50% 36%,rgba(240,198,106,.22),transparent 30%),
+    radial-gradient(circle at 50% 50%,rgba(83,118,255,.12),transparent 54%),
+    rgba(2,4,8,.91) !important;
+}
+.result-card{
+  background:
+    linear-gradient(160deg,rgba(17,23,37,.96),rgba(5,9,16,.94)) !important;
+  box-shadow:
+    0 40px 120px rgba(0,0,0,.72),
+    0 0 100px rgba(240,198,106,.12) !important;
+}
+
+/* projector presentation */
+.projector-body{
+  background:
+    radial-gradient(circle at 50% 20%,rgba(68,70,145,.19),transparent 38%),
+    #03050a !important;
+}
+.projector-hero{
+  position:relative;
+  overflow:hidden;
+}
+.projector-hero::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:linear-gradient(115deg,transparent 35%,rgba(121,209,255,.035),transparent 64%);
+}
+
+/* emergency/admin remains practical, just visually related */
+.visual-host .admin-card{
+  background:rgba(8,12,20,.82) !important;
+}
+
+/* reduced-motion keeps the atmosphere without animation overload */
+@media (prefers-reduced-motion:reduce){
+  .btn{transition:none}
+}
+
+/* V0.29 QUANTUM ARENA — Visual Phase 2 */
+:root{--qcyan:#67e8ff;--qviolet:#9a68ff;--qgold:#ffd36a}
+.visual-player{
+ background:
+ radial-gradient(ellipse at 50% 48%,rgba(63,76,190,.25),transparent 34%),
+ radial-gradient(circle at 10% 35%,rgba(0,190,255,.16),transparent 29%),
+ radial-gradient(circle at 90% 38%,rgba(170,55,255,.15),transparent 30%),
+ linear-gradient(180deg,#050817,#010207 75%)!important;
+ isolation:isolate}
+.visual-player::before{
+ content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+ background:
+ radial-gradient(circle at 50% 47%,transparent 0 20%,rgba(103,232,255,.07) 20.2% 20.5%,transparent 20.7% 29%,rgba(154,104,255,.05) 29.2% 29.5%,transparent 29.7%),
+ linear-gradient(90deg,transparent 49.9%,rgba(103,232,255,.07) 50%,transparent 50.1%)}
+.visual-player .topbar{
+ margin:10px 14px 0;width:calc(100% - 28px);min-height:54px;border-radius:16px;
+ border:1px solid rgba(103,232,255,.16)!important;
+ background:linear-gradient(90deg,rgba(7,13,27,.78),rgba(13,13,31,.60),rgba(7,13,27,.78))!important;
+ box-shadow:0 14px 45px rgba(0,0,0,.35),inset 0 1px rgba(255,255,255,.05)}
+.visual-player .brand .eyebrow{color:var(--qcyan)!important;text-shadow:0 0 16px rgba(103,232,255,.5)}
+.visual-player .player-shell{gap:28px!important;padding:24px 26px 30px!important;max-width:none!important;position:relative}
+.visual-player .player-shell::before{
+ content:"QUANTUM BATTLE FIELD";position:absolute;top:5px;left:50%;transform:translateX(-50%);
+ color:rgba(103,232,255,.34);font-size:10px;font-weight:900;letter-spacing:.42em;white-space:nowrap}
+.visual-player .side-panel{
+ background:linear-gradient(180deg,rgba(7,14,27,.52),rgba(3,8,17,.32))!important;
+ border:1px solid rgba(103,232,255,.14)!important;border-radius:22px!important;
+ box-shadow:inset 0 1px rgba(255,255,255,.045),0 22px 75px rgba(0,0,0,.30)!important;
+ backdrop-filter:blur(17px);position:relative;overflow:hidden}
+.visual-player .side-panel::before{
+ content:"";position:absolute;inset:0;pointer-events:none;
+ background:linear-gradient(90deg,rgba(103,232,255,.12),transparent 18%,transparent 82%,rgba(154,104,255,.10));opacity:.7}
+.visual-player .quick-stat,.visual-player .next-box,.visual-player .large-mini-card,.visual-player .compact-incoming,.visual-player .status-pill{
+ background:rgba(2,7,15,.43)!important;border:1px solid rgba(103,232,255,.11)!important;border-radius:14px!important}
+.visual-player .center-panel{position:relative;isolation:isolate}
+.visual-player .center-panel::before,.visual-player .center-panel::after{
+ content:"";position:absolute;top:8%;bottom:8%;width:2px;z-index:-1;
+ background:linear-gradient(180deg,transparent,var(--qcyan) 22%,rgba(103,232,255,.08) 50%,var(--qviolet) 80%,transparent);
+ box-shadow:0 0 20px rgba(103,232,255,.55)}
+.visual-player .center-panel::before{left:-15px}.visual-player .center-panel::after{right:-15px}
+.visual-player .board-frame{
+ border-radius:8px!important;overflow:visible!important;
+ background:linear-gradient(180deg,rgba(3,10,20,.80),rgba(1,4,10,.96))!important;border:0!important;
+ box-shadow:
+ 0 0 0 1px rgba(103,232,255,.50),0 0 0 4px rgba(78,108,255,.04),
+ 0 0 48px rgba(64,206,255,.24),0 0 130px rgba(121,72,255,.18),
+ inset 0 0 65px rgba(68,157,255,.09),0 38px 110px rgba(0,0,0,.62)!important}
+.visual-player .board-frame::before{
+ inset:-18px!important;z-index:-1!important;border-radius:28px;
+ background:
+ linear-gradient(90deg,transparent,rgba(103,232,255,.34),transparent) top/100% 1px no-repeat,
+ linear-gradient(90deg,transparent,rgba(154,104,255,.25),transparent) bottom/100% 1px no-repeat,
+ radial-gradient(ellipse at 50% 0%,rgba(103,232,255,.16),transparent 52%),
+ radial-gradient(ellipse at 50% 100%,rgba(154,104,255,.15),transparent 52%)!important}
+.visual-player .board-frame::after{
+ left:-24%!important;right:-24%!important;bottom:-38px!important;height:58px!important;
+ background:radial-gradient(ellipse,rgba(103,232,255,.34),rgba(111,78,255,.14) 38%,transparent 72%)!important;filter:blur(11px)!important}
+.visual-player #board{
+ background:radial-gradient(circle at 50% 48%,rgba(60,112,185,.08),transparent 52%)!important;
+ filter:saturate(1.18) contrast(1.05) drop-shadow(0 0 5px rgba(103,232,255,.08))}
+.visual-player .entry-card{
+ background:radial-gradient(circle at 50% 0%,rgba(77,157,255,.13),transparent 42%),linear-gradient(155deg,rgba(11,19,34,.97),rgba(4,8,17,.95))!important;
+ border:1px solid rgba(103,232,255,.28)!important;border-radius:22px!important;
+ box-shadow:0 30px 95px rgba(0,0,0,.65),0 0 65px rgba(77,170,255,.14),inset 0 1px rgba(255,255,255,.06)!important}
+.visual-player .entry-card .btn.primary{background:linear-gradient(135deg,#ffe17d,#d99f35)!important;box-shadow:0 0 34px rgba(255,210,100,.18)}
+.visual-player .leader-card,.visual-player #leaderCard{
+ background:radial-gradient(circle at 16% 50%,rgba(255,211,106,.12),transparent 30%),linear-gradient(100deg,rgba(15,18,32,.84),rgba(7,12,24,.54))!important;
+ border:1px solid rgba(255,211,106,.20)!important}
+.visual-player .battle-stack .large-mini-card:first-child{border-left:2px solid rgba(255,211,106,.52)!important}
+.visual-player .battle-stack .large-mini-card:last-child{border-left:2px solid rgba(255,74,130,.48)!important}
+.visual-player:has(.combat-alert.show) .board-frame{animation:qcharge .55s ease-out}
+@keyframes qcharge{35%{box-shadow:0 0 0 1px white,0 0 80px rgba(103,232,255,.50),0 0 170px rgba(154,104,255,.30),inset 0 0 80px rgba(103,232,255,.12)}}
+
+/* Same universe for Practice / Top / Projector */
+.practice-body,.projector-body{
+ background:radial-gradient(ellipse at 50% 45%,rgba(66,78,190,.22),transparent 38%),radial-gradient(circle at 85% 25%,rgba(145,65,255,.12),transparent 28%),linear-gradient(180deg,#050817,#010207 72%)!important}
+.practice-board-shell{
+ border-radius:8px!important;overflow:visible!important;
+ box-shadow:0 0 0 1px rgba(103,232,255,.48),0 0 55px rgba(70,205,255,.22),0 0 130px rgba(120,70,255,.17),0 36px 105px rgba(0,0,0,.60)!important}
+.landing{
+ background:radial-gradient(circle at 50% 46%,rgba(73,91,220,.28),transparent 24%),radial-gradient(circle at 50% 46%,transparent 0 28%,rgba(103,232,255,.12) 28.2% 28.5%,transparent 28.7% 40%,rgba(154,104,255,.09) 40.2% 40.5%,transparent 40.7%),linear-gradient(180deg,#050817,#010207)!important}
+.landing-card{background:linear-gradient(155deg,rgba(10,18,33,.80),rgba(4,7,15,.68))!important;border:1px solid rgba(103,232,255,.24)!important;backdrop-filter:blur(22px)}
+.landing .eyebrow{color:var(--qcyan)!important}
+.projector-grid .projector-card{background:linear-gradient(155deg,rgba(8,15,28,.72),rgba(3,7,15,.58))!important;border-color:rgba(103,232,255,.15)!important}
+
+@media(max-width:1100px){.visual-player .player-shell{gap:16px!important;padding-left:14px!important;padding-right:14px!important}.visual-player .center-panel::before{left:-8px}.visual-player .center-panel::after{right:-8px}}
+@media(max-width:760px){.visual-player .topbar{margin:5px 6px 0;width:calc(100% - 12px)}.visual-player .player-shell::before{display:none}}
+
+
+/* ===================================================================
+   V0.30 — QUANTUM ARENA VIEWPORT FIT
+   Fixes bottom clipping while preserving Visual Phase 2.
+   =================================================================== */
+
+/* Top chrome + app must fit inside the actual browser viewport. */
+.visual-player{
+  overflow:hidden !important;
+}
+.visual-player .topbar{
+  box-sizing:border-box;
+}
+.visual-player .player-shell{
+  height:calc(100vh - 88px) !important;
+  min-height:0 !important;
+  box-sizing:border-box;
+  overflow:hidden !important;
+  align-items:stretch !important;
+}
+
+/* The three main columns must never exceed available vertical space. */
+.visual-player .side-panel,
+.visual-player .center-panel{
+  min-height:0 !important;
+  height:100% !important;
+  max-height:100% !important;
+  box-sizing:border-box;
+}
+
+/* Central board scales from viewport height first, width second. */
+.visual-player .center-panel{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  overflow:visible !important;
+}
+.visual-player .board-frame{
+  height:min(calc(100vh - 118px), calc((100vw - 700px) * 1.96)) !important;
+  max-height:100% !important;
+  width:auto !important;
+  aspect-ratio:1/2 !important;
+  margin:auto !important;
+  flex:0 1 auto !important;
+}
+.visual-player #board{
+  width:100% !important;
+  height:100% !important;
+  display:block !important;
+}
+
+/* Side HUD content compresses vertically rather than falling below viewport. */
+.visual-player .side-left,
+.visual-player .side-right{
+  display:flex !important;
+  flex-direction:column !important;
+  overflow:hidden !important;
+}
+.visual-player .left-top-grid{
+  flex:0 0 auto !important;
+}
+.visual-player .section-heading{
+  flex:0 0 auto !important;
+  margin-top:7px !important;
+  margin-bottom:5px !important;
+}
+.visual-player .large-stack{
+  flex:1 1 0 !important;
+  min-height:0 !important;
+  overflow:hidden !important;
+  display:grid !important;
+  grid-template-rows:minmax(0,1fr) minmax(0,1fr) !important;
+}
+.visual-player .large-mini-card{
+  min-height:0 !important;
+  overflow:hidden !important;
+}
+.visual-player .large-mini-card .mini-board{
+  max-height:100% !important;
+}
+
+/* Short-height desktops: aggressively tighten paddings while keeping all info visible. */
+@media (max-height:900px){
+  .visual-player .topbar{
+    margin-top:6px !important;
+    min-height:50px !important;
+  }
+  .visual-player .player-shell{
+    height:calc(100vh - 72px) !important;
+    padding-top:14px !important;
+    padding-bottom:12px !important;
+  }
+  .visual-player .side-panel{
+    padding:10px !important;
+  }
+  .visual-player .quick-stat{
+    min-height:42px !important;
+    padding:6px 8px !important;
+  }
+  .visual-player .next-box{
+    padding:7px !important;
+  }
+  .visual-player .section-heading{
+    margin:5px 0 4px !important;
+    font-size:10px !important;
+  }
+  .visual-player .large-stack{
+    gap:7px !important;
+  }
+  .visual-player .large-mini-card{
+    padding:8px !important;
+    gap:8px !important;
+  }
+  .visual-player .board-frame{
+    height:min(calc(100vh - 96px), calc((100vw - 650px) * 1.96)) !important;
+  }
+}
+
+/* 768–820px effective browser height, common on company PCs. */
+@media (max-height:820px){
+  .visual-player .topbar{
+    margin:4px 8px 0 !important;
+    width:calc(100% - 16px) !important;
+    min-height:46px !important;
+    border-radius:12px !important;
+  }
+  .visual-player .player-shell{
+    height:calc(100vh - 60px) !important;
+    padding:8px 12px 10px !important;
+    gap:14px !important;
+  }
+  .visual-player .player-shell::before{
+    display:none !important;
+  }
+  .visual-player .side-panel{
+    padding:8px !important;
+    border-radius:16px !important;
+  }
+  .visual-player .left-top-grid{
+    gap:6px !important;
+  }
+  .visual-player .quick-stat{
+    min-height:38px !important;
+    padding:5px 7px !important;
+  }
+  .visual-player .quick-stat span{
+    font-size:7px !important;
+  }
+  .visual-player .quick-stat b{
+    font-size:16px !important;
+  }
+  .visual-player .mini-controls{
+    padding:5px 6px !important;
+  }
+  .visual-player .mini-controls span{
+    font-size:6px !important;
+  }
+  .visual-player .next-box{
+    padding:6px !important;
+  }
+  .visual-player #nextCanvas{
+    max-height:68px !important;
+  }
+  .visual-player .section-heading{
+    margin:4px 0 3px !important;
+    font-size:9px !important;
+  }
+  .visual-player .large-stack{
+    gap:6px !important;
+  }
+  .visual-player .large-mini-card{
+    padding:6px 7px !important;
+    grid-template-columns:minmax(0,1fr) minmax(58px,28%) !important;
+  }
+  .visual-player .large-mini-card .mini-copy>strong{
+    font-size:12px !important;
+  }
+  .visual-player .large-mini-card .mini-label{
+    font-size:7px !important;
+  }
+  .visual-player .mini-inline-meta b{
+    font-size:10px !important;
+  }
+  .visual-player .mini-inline-meta small{
+    font-size:7px !important;
+  }
+  .visual-player .board-frame{
+    height:min(calc(100vh - 78px), calc((100vw - 560px) * 1.96)) !important;
+  }
+  .visual-player .center-panel::before{left:-8px !important}
+  .visual-player .center-panel::after{right:-8px !important}
+}
+
+/* Narrower windows: preserve the full 20-row board and both side rails. */
+@media (max-width:1380px) and (min-width:760px){
+  .visual-player .player-shell{
+    grid-template-columns:minmax(220px,.82fr) minmax(250px,.78fr) minmax(220px,.82fr) !important;
+    gap:12px !important;
+  }
+  .visual-player .board-frame{
+    height:min(calc(100vh - 92px), calc((100vw - 500px) * 1.98)) !important;
+  }
+}
+
+/* Last-resort compact desktop mode: never require vertical scrolling. */
+@media (max-width:1050px) and (min-width:760px){
+  .visual-player .player-shell{
+    grid-template-columns:minmax(190px,.76fr) minmax(220px,.72fr) minmax(190px,.76fr) !important;
+    gap:8px !important;
+    padding-left:8px !important;
+    padding-right:8px !important;
+  }
+  .visual-player .next-box{
+    display:none !important;
+  }
+  .visual-player .left-top-grid{
+    grid-template-columns:1fr !important;
+  }
+  .visual-player .board-frame{
+    height:min(calc(100vh - 78px), calc((100vw - 420px) * 2)) !important;
+  }
+}
+
+/* Practice uses the same viewport-fit discipline. */
+.practice-page{
+  overflow:hidden !important;
+}
+.practice-layout{
+  height:calc(100vh - 68px) !important;
+  min-height:0 !important;
+  overflow:hidden !important;
+}
+.practice-board-wrap,
+.practice-side{
+  min-height:0 !important;
+  max-height:100% !important;
+}
+.practice-board-shell{
+  height:min(100%, calc((100vw - 580px) * 1.98)) !important;
+  max-height:100% !important;
+  width:auto !important;
+  aspect-ratio:1/2 !important;
+}
+
+/* ===================================================================
+   V0.31 — TRUE VIEWPORT LAYOUT FIX
+   player-shell owns the whole browser viewport. The top bar takes its
+   natural row; game-layout receives only the remaining height.
+   This fixes the bottom clipping that remained in V0.30.
+   =================================================================== */
+
+html,
+body.visual-player{
+  height:100%;
+  min-height:0 !important;
+}
+
+body.visual-player{
+  height:100vh !important;
+  height:100dvh !important;
+  min-height:100vh !important;
+  min-height:100dvh !important;
+  overflow:hidden !important;
+}
+
+.visual-player .player-shell{
+  width:100% !important;
+  height:100vh !important;
+  height:100dvh !important;
+  min-height:0 !important;
+  max-height:100dvh !important;
+  padding:0 !important;
+  gap:0 !important;
+  display:grid !important;
+  grid-template-rows:auto minmax(0,1fr) !important;
+  overflow:hidden !important;
+}
+
+.visual-player .topbar{
+  position:relative;
+  z-index:10;
+  flex:none !important;
+  box-sizing:border-box !important;
+}
+
+.visual-player .game-layout{
+  width:100% !important;
+  height:auto !important;
+  min-height:0 !important;
+  max-height:none !important;
+  box-sizing:border-box !important;
+  overflow:hidden !important;
+  align-items:stretch !important;
+}
+
+.visual-player .side-panel,
+.visual-player .board-wrap{
+  height:100% !important;
+  min-height:0 !important;
+  max-height:100% !important;
+  box-sizing:border-box !important;
+}
+
+.visual-player .board-wrap{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  overflow:visible !important;
+}
+
+.visual-player .board-frame{
+  height:min(100%, calc((100vw - 700px) * 1.96)) !important;
+  max-height:100% !important;
+  width:auto !important;
+  max-width:100% !important;
+  aspect-ratio:1/2 !important;
+  margin:auto !important;
+}
+
+/* Company-PC sized browser windows: let remaining grid height be the
+   single source of truth instead of subtracting viewport height twice. */
+@media (max-height:900px){
+  .visual-player .player-shell{
+    height:100vh !important;
+    height:100dvh !important;
+    padding:0 !important;
+  }
+  .visual-player .game-layout{
+    height:auto !important;
+    min-height:0 !important;
+    padding-top:8px !important;
+    padding-bottom:10px !important;
+  }
+  .visual-player .board-frame{
+    height:min(100%, calc((100vw - 650px) * 1.96)) !important;
+  }
+}
+
+@media (max-height:820px){
+  .visual-player .player-shell{
+    height:100vh !important;
+    height:100dvh !important;
+    padding:0 !important;
+  }
+  .visual-player .game-layout{
+    height:auto !important;
+    min-height:0 !important;
+    padding-top:6px !important;
+    padding-bottom:8px !important;
+  }
+  .visual-player .board-frame{
+    height:min(100%, calc((100vw - 560px) * 1.96)) !important;
+  }
+}
+
+@media (max-width:1380px) and (min-width:760px){
+  .visual-player .board-frame{
+    height:min(100%, calc((100vw - 500px) * 1.98)) !important;
+  }
+}
+
+@media (max-width:1050px) and (min-width:760px){
+  .visual-player .board-frame{
+    height:min(100%, calc((100vw - 420px) * 2)) !important;
+  }
+}
+
+/* ===================================================================
+   V0.32 — CINEMATIC QUANTUM ARENA
+   Visual-only layer. Keeps V0.31 viewport/gameplay behavior unchanged.
+   =================================================================== */
+
+body.visual-player{
+  position:relative;
+  isolation:isolate;
+  background:#020711 !important;
+}
+
+/* cinematic arena reference texture — deliberately subdued so live HUD stays readable */
+body.visual-player::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:-5;
+  pointer-events:none;
+  background-image:
+    linear-gradient(180deg,rgba(2,6,15,.38) 0%,rgba(2,7,16,.08) 42%,rgba(1,5,12,.58) 100%),
+    url('../assets/arena-clean-v037.png');
+  background-size:cover;
+  background-position:center 48%;
+  opacity:.56;
+  filter:saturate(1.12) contrast(1.06);
+  transform:scale(1.012);
+}
+
+/* hide the literal HUD details from the reference texture while preserving its arena lights */
+body.visual-player::after{
+  content:"";
+  position:fixed;
+  inset:0;
+  z-index:-4;
+  pointer-events:none;
+  background:
+    radial-gradient(ellipse at 50% 43%,rgba(2,8,17,.07) 0 16%,rgba(2,8,17,.28) 36%,rgba(2,8,17,.52) 75%),
+    linear-gradient(90deg,rgba(2,8,17,.44) 0 27%,rgba(2,8,17,.13) 39% 61%,rgba(2,8,17,.44) 73% 100%),
+    linear-gradient(180deg,rgba(0,0,0,.26),transparent 24%,transparent 72%,rgba(0,0,0,.34));
+  backdrop-filter:blur(.7px);
+}
+
+.visual-player .player-shell{
+  position:relative;
+  z-index:2;
+  background:
+    radial-gradient(circle at 50% 38%,rgba(37,151,255,.06),transparent 30%),
+    linear-gradient(180deg,rgba(2,8,18,.10),rgba(2,7,15,.20));
+}
+
+/* stadium crown / halo */
+.visual-player .player-shell::before{
+  display:block !important;
+  content:"QUANTUM  BATTLE  FIELD" !important;
+  position:absolute !important;
+  z-index:1 !important;
+  left:50% !important;
+  top:3px !important;
+  transform:translateX(-50%) !important;
+  width:min(34vw,520px) !important;
+  height:20px !important;
+  padding:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  color:rgba(105,202,255,.68) !important;
+  font-size:8px !important;
+  line-height:20px !important;
+  font-weight:900 !important;
+  letter-spacing:.46em !important;
+  text-align:center !important;
+  opacity:1 !important;
+  pointer-events:none !important;
+}
+
+.visual-player .topbar{
+  margin:9px 18px 8px !important;
+  width:calc(100% - 36px) !important;
+  min-height:68px !important;
+  height:68px !important;
+  padding:0 24px !important;
+  border:1px solid rgba(75,192,255,.26) !important;
+  border-radius:17px !important;
+  background:linear-gradient(105deg,rgba(4,18,31,.78),rgba(9,13,31,.70)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.05),
+    0 15px 34px rgba(0,0,0,.30),
+    0 0 28px rgba(28,154,255,.05) !important;
+  backdrop-filter:blur(16px) saturate(1.25) !important;
+}
+
+.visual-player .topbar::before{
+  content:"";
+  position:absolute;
+  left:15%; right:15%; bottom:-1px; height:1px;
+  background:linear-gradient(90deg,transparent,#3fd2ff 30%,#f1c668 50%,#3fd2ff 70%,transparent);
+  opacity:.62;
+  box-shadow:0 0 13px rgba(61,208,255,.45);
+}
+
+.visual-player .topbar .eyebrow{
+  color:#f6cd72 !important;
+  text-shadow:0 0 18px rgba(244,196,83,.30);
+}
+
+.visual-player .game-layout{
+  position:relative;
+  z-index:3;
+  perspective:1500px;
+}
+
+/* floor perspective grid */
+.visual-player .game-layout::before{
+  content:"";
+  position:absolute;
+  z-index:-2;
+  pointer-events:none;
+  left:-4vw; right:-4vw; bottom:-10%; height:48%;
+  transform-origin:50% 100%;
+  transform:perspective(650px) rotateX(63deg) scaleX(1.16);
+  background-image:
+    linear-gradient(rgba(56,169,255,.17) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(56,169,255,.17) 1px,transparent 1px);
+  background-size:46px 46px;
+  mask-image:linear-gradient(to top,rgba(0,0,0,.88),transparent 82%);
+  opacity:.48;
+}
+
+/* central energy tunnel */
+.visual-player .game-layout::after{
+  content:"";
+  position:absolute;
+  z-index:-3;
+  pointer-events:none;
+  left:50%; top:5%;
+  width:min(49vw,770px); height:min(70vw,770px);
+  transform:translateX(-50%);
+  border-radius:50%;
+  border:1px solid rgba(83,177,255,.11);
+  box-shadow:
+    0 0 0 38px rgba(38,134,255,.022),
+    0 0 0 78px rgba(38,134,255,.018),
+    0 0 90px rgba(36,126,255,.14),
+    inset 0 0 90px rgba(47,154,255,.07);
+}
+
+.visual-player .side-panel{
+  position:relative;
+  border:1px solid rgba(65,194,255,.22) !important;
+  background:linear-gradient(150deg,rgba(5,27,42,.78),rgba(7,10,28,.77) 58%,rgba(16,9,37,.72)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.045),
+    inset 0 0 34px rgba(28,143,231,.035),
+    0 22px 55px rgba(0,0,0,.34),
+    0 0 30px rgba(34,165,255,.055) !important;
+  backdrop-filter:blur(18px) saturate(1.28) !important;
+}
+
+.visual-player .side-panel::before{
+  content:"";
+  position:absolute;
+  pointer-events:none;
+  inset:0;
+  border-radius:inherit;
+  padding:1px;
+  background:linear-gradient(135deg,rgba(79,220,255,.46),rgba(255,255,255,.02) 35%,rgba(238,188,74,.18) 73%,rgba(72,157,255,.33));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask-composite:exclude;
+  opacity:.54;
+}
+
+.visual-player .side-left{transform:perspective(1500px) rotateY(1.15deg); transform-origin:right center}
+.visual-player .side-right{transform:perspective(1500px) rotateY(-1.15deg); transform-origin:left center}
+
+.visual-player .quick-stat,
+.visual-player .mini-controls,
+.visual-player .next-box,
+.visual-player .leader-box,
+.visual-player .status-pill,
+.visual-player .large-mini-card{
+  background:linear-gradient(145deg,rgba(2,13,24,.77),rgba(4,8,19,.66)) !important;
+  border-color:rgba(94,190,255,.15) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.025),0 8px 18px rgba(0,0,0,.14);
+}
+
+.visual-player .panel-title,
+.visual-player .section-heading{
+  color:#8fdcff !important;
+  text-shadow:0 0 16px rgba(54,186,255,.22);
+}
+
+.visual-player .mini-label{
+  color:#f2c45d !important;
+  text-shadow:0 0 12px rgba(242,196,93,.18);
+}
+
+.visual-player .board-wrap{
+  position:relative;
+  isolation:isolate;
+}
+
+/* luminous pedestal behind the board */
+.visual-player .board-wrap::before{
+  content:"";
+  position:absolute;
+  z-index:-2;
+  left:50%; bottom:-6px;
+  width:135%; height:50px;
+  transform:translateX(-50%) perspective(380px) rotateX(67deg);
+  border:2px solid rgba(62,197,255,.55);
+  border-radius:50%;
+  background:radial-gradient(ellipse,rgba(21,117,214,.16),rgba(2,9,19,.65) 62%,transparent 68%);
+  box-shadow:
+    0 0 0 9px rgba(34,115,205,.08),
+    0 0 0 18px rgba(239,186,60,.055),
+    0 0 42px rgba(52,176,255,.40),
+    0 0 20px rgba(245,193,65,.20);
+}
+
+/* vertical stadium light tower */
+.visual-player .board-wrap::after{
+  content:"";
+  position:absolute;
+  z-index:-3;
+  left:50%; top:-7%;
+  transform:translateX(-50%);
+  width:72%; height:110%;
+  background:
+    linear-gradient(90deg,transparent,rgba(62,182,255,.055) 8%,transparent 14% 86%,rgba(62,182,255,.055) 92%,transparent),
+    radial-gradient(ellipse at 50% 20%,rgba(45,163,255,.11),transparent 42%);
+  filter:blur(.2px);
+}
+
+.visual-player .board-frame{
+  border:1px solid rgba(87,209,255,.68) !important;
+  border-radius:7px !important;
+  background:#02070c;
+  box-shadow:
+    0 0 0 1px rgba(8,29,49,.88),
+    -8px 0 22px rgba(44,179,255,.16),
+    8px 0 24px rgba(246,193,65,.10),
+    0 0 46px rgba(37,163,255,.22),
+    0 28px 70px rgba(0,0,0,.56) !important;
+}
+
+.visual-player .board-frame::before,
+.visual-player .board-frame::after{
+  content:"";
+  position:absolute;
+  z-index:25;
+  pointer-events:none;
+  top:8%; bottom:8%; width:3px;
+  border-radius:999px;
+}
+.visual-player .board-frame::before{
+  left:-1px;
+  background:linear-gradient(transparent,#43d8ff 15% 85%,transparent);
+  box-shadow:0 0 13px #28bfff,0 0 30px rgba(40,191,255,.45);
+}
+.visual-player .board-frame::after{
+  right:-1px;
+  background:linear-gradient(transparent,#f2c354 15% 85%,transparent);
+  box-shadow:0 0 13px #eab746,0 0 30px rgba(234,183,70,.38);
+}
+
+.visual-player #board{
+  background:
+    linear-gradient(rgba(72,164,222,.055) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(72,164,222,.055) 1px,transparent 1px),
+    linear-gradient(180deg,rgba(2,9,15,.94),rgba(1,4,8,.985)) !important;
+  background-size:10% 5%,10% 5%,auto !important;
+}
+
+.visual-player .overlay-card{
+  border-color:rgba(80,190,255,.28) !important;
+  background:linear-gradient(145deg,rgba(7,20,33,.92),rgba(5,8,16,.92)) !important;
+  box-shadow:0 25px 72px rgba(0,0,0,.58),0 0 34px rgba(55,175,255,.12),inset 0 1px 0 rgba(255,255,255,.05) !important;
+}
+
+.visual-player .btn.primary{
+  background:linear-gradient(135deg,#ffdf7f,#d6992a) !important;
+  box-shadow:0 9px 24px rgba(219,155,43,.23),inset 0 1px 0 rgba(255,255,255,.55);
+}
+
+.visual-player kbd{
+  border-color:rgba(109,190,236,.26) !important;
+  background:linear-gradient(#31404f,#18232f) !important;
+}
+
+/* keep V0.31 company-PC fit exactly intact */
+@media (max-height:820px){
+  .visual-player .topbar{
+    margin:4px 8px 4px !important;
+    width:calc(100% - 16px) !important;
+    min-height:46px !important;
+    height:46px !important;
+  }
+  .visual-player .player-shell::before{display:none !important}
+}
+
+@media (prefers-reduced-motion:no-preference){
+  body.visual-player::before{animation:arenaBreath 10s ease-in-out infinite alternate}
+  .visual-player .game-layout::after{animation:haloPulse 6s ease-in-out infinite alternate}
+}
+@keyframes arenaBreath{
+  from{filter:saturate(1.06) contrast(1.04) brightness(.96);transform:scale(1.012)}
+  to{filter:saturate(1.18) contrast(1.08) brightness(1.035);transform:scale(1.02)}
+}
+@keyframes haloPulse{
+  from{opacity:.62;transform:translateX(-50%) scale(.985)}
+  to{opacity:1;transform:translateX(-50%) scale(1.018)}
+}
+
+/* ===================================================================
+   V0.33 — ARENA REVEAL
+   Make the cinematic arena a visible part of the experience:
+   narrower floating HUD rails, larger negative-space windows, stronger
+   arena exposure, while preserving V0.31's true-viewport fit.
+   =================================================================== */
+
+/* Bring the arena forward: less dark veil, stronger light/color/detail. */
+body.visual-player::before{
+  opacity:.88 !important;
+  background-image:
+    linear-gradient(180deg,rgba(1,5,13,.14) 0%,rgba(1,6,14,.015) 38%,rgba(1,5,12,.25) 100%),
+    url('../assets/arena-clean-v037.png') !important;
+  filter:saturate(1.32) contrast(1.14) brightness(1.08) !important;
+  transform:scale(1.006) !important;
+}
+body.visual-player::after{
+  background:
+    radial-gradient(ellipse at 50% 43%,rgba(2,8,17,.015) 0 18%,rgba(2,8,17,.08) 42%,rgba(2,8,17,.20) 78%),
+    linear-gradient(90deg,rgba(2,8,17,.16) 0 18%,rgba(2,8,17,.025) 32% 68%,rgba(2,8,17,.16) 82% 100%),
+    linear-gradient(180deg,rgba(0,0,0,.08),transparent 20%,transparent 78%,rgba(0,0,0,.16)) !important;
+  backdrop-filter:none !important;
+}
+
+.visual-player .player-shell{
+  background:
+    radial-gradient(circle at 50% 39%,rgba(37,151,255,.025),transparent 34%),
+    linear-gradient(180deg,rgba(2,8,18,.015),rgba(2,7,15,.055)) !important;
+}
+
+/* The big change: HUD rails no longer occupy most of the arena width. */
+.visual-player .game-layout{
+  grid-template-columns:minmax(268px,310px) minmax(330px,430px) minmax(268px,310px) !important;
+  column-gap:clamp(28px,3vw,52px) !important;
+  padding-left:clamp(20px,3.5vw,62px) !important;
+  padding-right:clamp(20px,3.5vw,62px) !important;
+  padding-top:8px !important;
+  padding-bottom:10px !important;
+}
+
+/* Floating glass, not opaque walls. */
+.visual-player .side-panel{
+  padding:11px !important;
+  border-radius:18px !important;
+  background:linear-gradient(150deg,rgba(4,24,39,.58),rgba(6,10,27,.55) 58%,rgba(15,8,35,.50)) !important;
+  border-color:rgba(78,201,255,.30) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.055),
+    inset 0 0 30px rgba(28,143,231,.025),
+    0 18px 46px rgba(0,0,0,.26),
+    0 0 34px rgba(34,165,255,.075) !important;
+  backdrop-filter:blur(10px) saturate(1.15) !important;
+}
+.visual-player .side-left{
+  transform:perspective(1500px) rotateY(2deg) translateX(1px) !important;
+}
+.visual-player .side-right{
+  transform:perspective(1500px) rotateY(-2deg) translateX(-1px) !important;
+}
+
+/* Cards become translucent windows so arena light can read through them. */
+.visual-player .quick-stat,
+.visual-player .mini-controls,
+.visual-player .next-box,
+.visual-player .leader-box,
+.visual-player .status-pill,
+.visual-player .large-mini-card{
+  background:linear-gradient(145deg,rgba(2,13,24,.54),rgba(4,8,19,.47)) !important;
+  border-color:rgba(94,190,255,.17) !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.025),0 6px 15px rgba(0,0,0,.11) !important;
+}
+
+/* Tighten HUD internals rather than letting the rails grow wider. */
+.visual-player .left-top-grid{gap:7px !important}
+.visual-player .quick-stats{gap:5px !important}
+.visual-player .quick-stat{min-height:42px !important;padding:6px 8px !important}
+.visual-player .mini-controls{padding:5px 6px !important;gap:4px 5px !important}
+.visual-player .next-box{padding:6px !important}
+.visual-player #nextCanvas{max-height:70px !important}
+.visual-player .section-heading{margin:6px 0 4px !important;font-size:9px !important}
+.visual-player .large-stack{gap:7px !important}
+.visual-player .large-mini-card{
+  padding:7px 8px !important;
+  gap:7px !important;
+  grid-template-columns:minmax(0,1fr) minmax(58px,27%) !important;
+}
+.visual-player .large-mini-card .mini-copy>strong{font-size:13px !important}
+.visual-player .large-mini-card .mini-label{font-size:7px !important}
+.visual-player .mini-inline-meta{margin-top:4px !important}
+.visual-player .mini-inline-meta b{font-size:11px !important}
+.visual-player .mini-inline-meta small{font-size:7px !important}
+.visual-player .large-mini-card .mini-event{font-size:8px !important;padding-top:4px !important}
+
+/* Keep the central board authoritative, but let the arena breathe around it. */
+.visual-player .board-frame{
+  height:min(100%, calc((100vw - 720px) * 1.96)) !important;
+  box-shadow:
+    0 0 0 1px rgba(8,29,49,.78),
+    -8px 0 26px rgba(44,179,255,.22),
+    8px 0 28px rgba(246,193,65,.15),
+    0 0 62px rgba(37,163,255,.28),
+    0 30px 76px rgba(0,0,0,.48) !important;
+}
+.visual-player .board-wrap::after{
+  width:98% !important;
+  background:
+    linear-gradient(90deg,transparent,rgba(62,182,255,.075) 8%,transparent 15% 85%,rgba(62,182,255,.075) 92%,transparent),
+    radial-gradient(ellipse at 50% 20%,rgba(45,163,255,.16),transparent 44%) !important;
+}
+.visual-player .board-wrap::before{
+  width:155% !important;
+  opacity:.94 !important;
+}
+
+/* More visible floor/tunnel accents; these are UI-generated, not baked image detail. */
+.visual-player .game-layout::before{opacity:.72 !important}
+.visual-player .game-layout::after{
+  width:min(56vw,880px) !important;
+  border-color:rgba(83,177,255,.16) !important;
+  box-shadow:
+    0 0 0 38px rgba(38,134,255,.030),
+    0 0 0 78px rgba(38,134,255,.024),
+    0 0 112px rgba(36,126,255,.20),
+    inset 0 0 105px rgba(47,154,255,.095) !important;
+}
+
+/* The company-PC viewport is the main target. Keep the reveal at short heights. */
+@media (max-height:900px) and (min-width:1101px){
+  .visual-player .game-layout{
+    grid-template-columns:minmax(248px,288px) minmax(315px,405px) minmax(248px,288px) !important;
+    column-gap:clamp(24px,2.7vw,44px) !important;
+    padding-left:clamp(12px,2.4vw,38px) !important;
+    padding-right:clamp(12px,2.4vw,38px) !important;
+  }
+  .visual-player .side-panel{padding:8px !important}
+  .visual-player .board-frame{height:min(100%, calc((100vw - 650px) * 1.96)) !important}
+}
+
+@media (max-height:820px) and (min-width:1101px){
+  .visual-player .game-layout{
+    grid-template-columns:minmax(235px,275px) minmax(300px,390px) minmax(235px,275px) !important;
+    column-gap:clamp(20px,2.5vw,38px) !important;
+    padding-left:12px !important;
+    padding-right:12px !important;
+  }
+  .visual-player .board-frame{height:min(100%, calc((100vw - 600px) * 1.96)) !important}
+}
+
+/* Preserve compact desktop fallback below 1100px. */
+@media (max-width:1100px) and (min-width:760px){
+  .visual-player .game-layout{
+    grid-template-columns:minmax(190px,.74fr) minmax(220px,.72fr) minmax(190px,.74fr) !important;
+    column-gap:10px !important;
+    padding-left:8px !important;
+    padding-right:8px !important;
+  }
+}
+
+@media (prefers-reduced-motion:no-preference){
+  body.visual-player::before{animation:arenaRevealBreath 9s ease-in-out infinite alternate !important}
+}
+@keyframes arenaRevealBreath{
+  from{filter:saturate(1.25) contrast(1.11) brightness(1.03);transform:scale(1.006)}
+  to{filter:saturate(1.39) contrast(1.17) brightness(1.12);transform:scale(1.012)}
+}
+
+
+/* =========================================================
+   V0.34 — LINE IMPACT FX
+   Bright frame bloom + micro impact. Canvas-specific row sweep
+   is rendered in js/render.js so the flash follows the cleared row.
+   ========================================================= */
+@keyframes brLineImpact1{
+  0%{filter:brightness(1);transform:translateZ(0)}
+  13%{filter:brightness(1.55) saturate(1.25);box-shadow:0 0 0 1px rgba(119,225,255,.95),0 0 34px rgba(80,207,255,.52),0 0 64px rgba(255,205,83,.16)}
+  100%{filter:brightness(1);transform:translateZ(0)}
+}
+@keyframes brLineImpact2{
+  0%{filter:brightness(1);transform:translateX(0)}
+  12%{filter:brightness(1.75) saturate(1.35);transform:translateX(-1px)}
+  20%{transform:translateX(1px)}
+  100%{filter:brightness(1);transform:translateX(0)}
+}
+@keyframes brLineImpact3{
+  0%{filter:brightness(1);transform:translateX(0) scale(1)}
+  10%{filter:brightness(1.95) saturate(1.45);transform:translateX(-2px) scale(1.003)}
+  17%{transform:translateX(2px) scale(1.003)}
+  24%{transform:translateX(-1px)}
+  100%{filter:brightness(1);transform:translateX(0) scale(1)}
+}
+@keyframes brLineImpact4{
+  0%{filter:brightness(1);transform:translateX(0) scale(1)}
+  8%{filter:brightness(2.25) saturate(1.6);transform:translateX(-3px) scale(1.006)}
+  13%{transform:translateX(3px) scale(1.006)}
+  18%{transform:translateX(-2px) scale(1.003)}
+  25%{transform:translateX(1px)}
+  100%{filter:brightness(1);transform:translateX(0) scale(1)}
+}
+.line-impact-1{animation:brLineImpact1 .52s cubic-bezier(.16,.84,.28,1)}
+.line-impact-2{animation:brLineImpact2 .56s cubic-bezier(.16,.84,.28,1)}
+.line-impact-3{animation:brLineImpact3 .60s cubic-bezier(.16,.84,.28,1)}
+.line-impact-4{animation:brLineImpact4 .64s cubic-bezier(.12,.86,.22,1)}
+.visual-player .board-frame.line-impact-2,
+.visual-player .board-frame.line-impact-3,
+.visual-player .board-frame.line-impact-4{
+  box-shadow:0 0 0 1px rgba(122,226,255,.95),0 0 32px rgba(52,194,255,.65),0 0 72px rgba(255,205,76,.32),0 28px 70px rgba(0,0,0,.55)!important;
+}
+.visual-player .board-frame.line-impact-4{
+  box-shadow:0 0 0 2px rgba(255,247,211,.95),0 0 38px rgba(86,220,255,.84),0 0 96px rgba(255,199,65,.58),0 0 150px rgba(64,153,255,.25),0 28px 70px rgba(0,0,0,.55)!important;
+}
+@media (prefers-reduced-motion:reduce){
+  .line-impact-1,.line-impact-2,.line-impact-3,.line-impact-4{animation:none!important}
+}
+
+/* ===================================================================
+   V0.35 — HUD CLARITY FIX
+   - Pushes the live HUD rails outward so they sit over the baked HUD
+     zones in arena-reference.png instead of stacking in front of them.
+   - Slightly zooms the arena texture to push most baked UI off-canvas.
+   - Raises live HUD typography without growing the panels back into walls.
+   - Gameplay / viewport / line-impact behavior unchanged.
+   =================================================================== */
+
+/* Push most of the reference-image HUD off the viewport while preserving
+   the arena lights, crowd and central tunnel. */
+body.visual-player::before{
+  background-size:132% auto !important;
+  background-position:center 49% !important;
+  opacity:.92 !important;
+  filter:saturate(1.36) contrast(1.16) brightness(1.08) !important;
+}
+
+/* Keep only a very light readability veil. */
+body.visual-player::after{
+  background:
+    radial-gradient(ellipse at 50% 43%,rgba(2,8,17,.00) 0 22%,rgba(2,8,17,.045) 48%,rgba(2,8,17,.14) 82%),
+    linear-gradient(180deg,rgba(0,0,0,.05),transparent 18%,transparent 80%,rgba(0,0,0,.11)) !important;
+}
+
+/* On wide desktops the side rails hug the outside of the screen instead
+   of clustering around the board. This deliberately overlays the baked
+   side panels in the reference art and opens clean arena space around the board. */
+@media (min-width:1400px){
+  .visual-player .game-layout{
+    grid-template-columns:minmax(300px,340px) minmax(350px,430px) minmax(300px,340px) !important;
+    justify-content:space-between !important;
+    column-gap:24px !important;
+    padding-left:clamp(18px,2.2vw,44px) !important;
+    padding-right:clamp(18px,2.2vw,44px) !important;
+  }
+  .visual-player .side-left{
+    transform:perspective(1500px) rotateY(1.45deg) !important;
+  }
+  .visual-player .side-right{
+    transform:perspective(1500px) rotateY(-1.45deg) !important;
+  }
+}
+
+/* A touch more opacity keeps the background artwork from visually fighting
+   the live data while still reading as floating glass. */
+.visual-player .side-panel{
+  background:linear-gradient(150deg,rgba(4,24,39,.70),rgba(6,10,27,.67) 58%,rgba(15,8,35,.62)) !important;
+  backdrop-filter:blur(13px) saturate(1.18) !important;
+}
+.visual-player .quick-stat,
+.visual-player .mini-controls,
+.visual-player .next-box,
+.visual-player .leader-box,
+.visual-player .status-pill,
+.visual-player .large-mini-card{
+  background:linear-gradient(145deg,rgba(2,13,24,.66),rgba(4,8,19,.59)) !important;
+}
+
+/* ---------------- HUD readability pass ---------------- */
+.visual-player .panel-title{
+  font-size:12px !important;
+  line-height:1.25 !important;
+  letter-spacing:.10em !important;
+  font-weight:950 !important;
+}
+.visual-player .section-heading{
+  font-size:12px !important;
+  line-height:1.25 !important;
+  letter-spacing:.08em !important;
+  margin:8px 0 6px !important;
+  font-weight:950 !important;
+}
+.visual-player .quick-stat span{
+  font-size:10px !important;
+  line-height:1.2 !important;
+  letter-spacing:.06em !important;
+  font-weight:850 !important;
+}
+.visual-player .quick-stat b{
+  font-size:21px !important;
+  line-height:1 !important;
+}
+.visual-player .mini-controls span{
+  font-size:9px !important;
+  line-height:1.2 !important;
+  font-weight:800 !important;
+}
+.visual-player .mini-controls kbd{
+  font-size:12px !important;
+  font-weight:950 !important;
+}
+.visual-player .large-mini-card .mini-label{
+  font-size:9px !important;
+  line-height:1.25 !important;
+  letter-spacing:.025em !important;
+}
+.visual-player .large-mini-card .mini-copy>strong{
+  font-size:17px !important;
+  line-height:1.16 !important;
+  font-weight:950 !important;
+}
+.visual-player .mini-inline-meta b{
+  font-size:14px !important;
+  line-height:1.15 !important;
+  font-weight:950 !important;
+}
+.visual-player .mini-inline-meta small{
+  font-size:9px !important;
+  line-height:1.25 !important;
+  font-weight:800 !important;
+}
+.visual-player .large-mini-card .mini-event{
+  font-size:10px !important;
+  line-height:1.25 !important;
+  font-weight:950 !important;
+  padding-top:6px !important;
+}
+.visual-player .status-row .status-pill{
+  font-size:12px !important;
+  font-weight:950 !important;
+}
+.visual-player .status-row .combo-readout{
+  font-size:17px !important;
+  font-weight:1000 !important;
+}
+.visual-player .leader-copy strong{
+  font-size:23px !important;
+  font-weight:1000 !important;
+}
+.visual-player .leader-copy span{
+  font-size:14px !important;
+  font-weight:950 !important;
+}
+.visual-player .leader-copy small{
+  font-size:12px !important;
+  line-height:1.3 !important;
+  font-weight:800 !important;
+}
+.visual-player .topbar .eyebrow{
+  font-size:11px !important;
+}
+.visual-player .topbar .top-stats span{
+  font-size:10px !important;
+  font-weight:850 !important;
+}
+.visual-player .topbar .top-stats b{
+  font-size:22px !important;
+  font-weight:1000 !important;
+}
+
+/* Keep the company-PC short-height layout readable without causing overflow. */
+@media (max-height:900px) and (min-width:1101px){
+  .visual-player .section-heading{font-size:11px !important;margin:6px 0 5px !important}
+  .visual-player .large-mini-card .mini-copy>strong{font-size:15px !important}
+  .visual-player .large-mini-card .mini-label{font-size:8px !important}
+  .visual-player .mini-inline-meta b{font-size:13px !important}
+  .visual-player .mini-inline-meta small{font-size:8px !important}
+  .visual-player .large-mini-card .mini-event{font-size:9px !important}
+  .visual-player .quick-stat span{font-size:9px !important}
+  .visual-player .quick-stat b{font-size:19px !important}
+  .visual-player .panel-title{font-size:11px !important}
+}
+
+@media (max-height:820px) and (min-width:1101px){
+  .visual-player .large-mini-card .mini-copy>strong{font-size:14px !important}
+  .visual-player .leader-copy strong{font-size:19px !important}
+  .visual-player .leader-copy span{font-size:12px !important}
+  .visual-player .leader-copy small{font-size:10px !important}
+}
+
+/* v0.37 CLEAN ARENA: the background contains architecture only.
+   The live DOM is the sole source of HUD, board, NEXT and entry controls. */
+body.visual-player::before{
+  background-size:cover !important;
+  background-position:center center !important;
+  opacity:1 !important;
+  filter:saturate(1.08) contrast(1.04) !important;
+}
+.visual-player .large-mini-card{
+  grid-template-rows:minmax(0,1fr) !important;
+}
+.visual-player .large-mini-card .mini-board{
+  width:auto !important;
+  height:100% !important;
+  max-width:100% !important;
+  min-height:0 !important;
+  object-fit:contain;
+}
+.visual-player .overlay-card{
+  padding:clamp(16px,2vw,24px);
+}
+.visual-player .overlay-card h2{
+  font-size:clamp(20px,1.85vw,30px);
+  white-space:nowrap;
+}
+@media (min-width:1101px){
+  .visual-player .game-layout{
+    grid-template-columns:minmax(248px,340px) minmax(300px,430px) minmax(248px,340px) !important;
+    justify-content:center !important;
+    column-gap:clamp(24px,5vw,96px) !important;
+    padding-left:24px !important;
+    padding-right:24px !important;
+  }
+  .visual-player .side-panel{
+    align-self:center !important;
+    height:min(100%,680px,78dvh) !important;
+    transform:none !important;
+  }
+}
+
+/* v0.38: separate garbage landing from the homepage .landing layout. */
+.visual-player .combat-alert.garbage-landing{
+  display:block;
+  top:27%;
+  width:min(84%,330px);
+  height:auto;
+  min-height:0;
+  padding:10px 14px;
+  border-radius:12px;
+  background:rgba(30,5,13,.42) !important;
+  backdrop-filter:none;
+  box-shadow:0 0 16px rgba(255,71,112,.16) !important;
+  text-shadow:0 1px 3px #000;
+  pointer-events:none;
+}
+.visual-player .combat-alert.garbage-landing .combat-alert-kicker{font-size:10px;}
+.visual-player .combat-alert.garbage-landing .combat-alert-name{font-size:22px;margin-top:3px;}
+.visual-player .combat-alert.garbage-landing .combat-alert-main{font-size:16px;margin-top:5px;}
+.visual-player .combat-alert.garbage-landing .combat-alert-sub:empty{display:none;}
+.visual-player .result-overlay.loser .result-title{font-size:clamp(22px,3vw,38px) !important;line-height:1.15;}
+.result-winner{margin-top:14px;font-size:16px;color:var(--gold);overflow-wrap:anywhere;}
+.result-winner:empty{display:none;}
+/* v0.39: small connection status; does not cover the board. */
+.connection-status{position:fixed;bottom:4px;left:8px;z-index:70;max-width:95vw;font-size:12px;color:#d9efff;background:rgba(3,10,20,.75);border-radius:4px;padding:3px 8px;pointer-events:none}
+.admin-actions{flex-wrap:wrap;gap:8px}
+.admin-actions input{min-width:190px;padding:12px;color:#fff;background:#0a1522;border:1px solid #264258;border-radius:8px}
+/* Keep v0.31's header/game rows. Old <=1380px rules must not split the shell into columns. */
+.visual-player .player-shell{grid-template-columns:minmax(0,1fr) !important;}
+.entry-error{color:#ffd0d8;background:rgba(105,12,34,.8);border:1px solid #ff7896;border-radius:10px;padding:10px;font-size:14px;line-height:1.5;overflow-wrap:anywhere}
+.entry-error[hidden]{display:none}
+.host-state{padding:8px 12px;background:#0a1c2a;border-radius:8px}
+.action-message{color:#ffe6a6;line-height:1.6;min-height:1.6em}
+.action-message.is-error{color:#ffabbc}
+.admin-actions input[type=checkbox]{min-width:0;width:auto;margin-right:6px}
+body.visual-host{overflow:auto !important}
