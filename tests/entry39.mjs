@@ -14,8 +14,9 @@ await db.exec(readFileSync(new URL('../supabase/migrations/20260917033647_free50
 await db.query('insert into br39.hosts values($1)',[uid]);await db.query("select set_config('request.jwt.claim.sub',$1,false)",[uid]);
 let v=await host('CREATE',null,first),before=v.match;
 const update=readFileSync(new URL('../supabase/migrations/20260917063330_room_entry_management.sql',import.meta.url),'utf8');
+const rc3=readFileSync(new URL('../supabase/migrations/20260929065814_single_player_smoke_start.sql',import.meta.url),'utf8');
 await test('RC2 migration is repeatable and preserves existing rooms',async()=>{
- await db.exec(update);await db.exec(update);v=await host('VIEW');assert.deepEqual(v.match,before);
+ await db.exec(update);await db.exec(update);await db.exec(rc3);v=await host('VIEW');assert.deepEqual(v.match,before);
 });
 await test('Missing room and host authorization are explicit',async()=>{
  const x=await host('VIEW',null,null,'MISSING');assert.equal(x.host_authorized,true);assert.equal(x.room_exists,false);assert.equal(x.match,null);
@@ -41,6 +42,13 @@ await test('Two JOINs match HOST READY count; populated-room rotation is rejecte
  for(const p of players)await call('br39_join',[room,second,p.id,p.token,p.name]);
  v=await host('VIEW');assert.equal(v.players.filter(p=>p[2]).length,2);
  await assert.rejects(host('CHANGE_ENTRY_CODE',v,first),/参加者0人/);
+});
+await test('RC3 permits a one-player READY smoke start',async()=>{
+ const code='ONE-PLAYER',entry='one-player-code',p={id:randomUUID(),token:randomUUID()+randomUUID()};
+ let one=await host('CREATE',null,entry,code);
+ await call('br39_join',[code,entry,p.id,p.token,'SOLO']);
+ one=await host('VIEW',null,null,code);assert.equal(one.alive,1);assert.equal(one.players.filter(x=>x[2]).length,1);
+ one=await host('START',one,null,code);assert.equal(one.match.phase,'COUNTDOWN');
 });
 await test('START, HOST reload, result, NEXT and RESET preserve intended room/code lifecycle',async()=>{
  v=await host('START',v);assert.equal(v.match.phase,'COUNTDOWN');assert(Date.parse(v.match.start_at)-Number(v.server_ms)>7000);

@@ -10,8 +10,8 @@ const match={id:'TEST',phase:'LOBBY',battle_no:1,reset_epoch:0,start_at:null,win
 const baseView=()=>({api_version:2,room_exists:true,host_authorized:true,match:{...match},players:[],boards:{},attacks:[],alive:2,me:{alive:true,last_seq:0}});
 function client(file='player.js'){
  const nodes=new Map(),timers=[],calls=[];
- const element=()=>({textContent:'',innerHTML:'',value:'',disabled:false,style:{},width:100,height:200,
-  classList:{add(){},remove(){},toggle(){},contains(){return false;}},append(){},replaceChildren(){},getContext(){return {fillRect(){}}}});
+ const element=()=>({textContent:'',innerHTML:'',value:'',disabled:false,hidden:false,style:{},width:100,height:200,
+  classList:{add(){},remove(){},toggle(){},contains(){return false;}},append(){},replaceChildren(){},focus(){this.focused=true;},setSelectionRange(){},getContext(){return {fillRect(){}}}});
  const querySelector=s=>{if(!nodes.has(s))nodes.set(s,element());return nodes.get(s);};
  const context=vm.createContext({console,URL,Date,Map,Set,Math,Number,String,Promise,JSON,
   document:{querySelector,createElement:element,addEventListener(){},visibilityState:'visible'},
@@ -27,6 +27,8 @@ function client(file='player.js'){
     snapshot(){return '.'.repeat(200);}start(){this.started=true;}receiveAttack(n,id,turns){this.incoming.push({amount:n,attackId:id,turns});}},
   Renderer:class{draw(){}},requestAnimationFrame(){},setTimeout(fn,ms){timers.push({fn,ms});return timers.length;},clearTimeout(){},confirm(){return true;}
  });
+ vm.runInContext(clean('entry-code.js'),context);
+ querySelector('#newEntry').value='fixture-code-1234';
  vm.runInContext(clean(file),context);return {context,nodes,timers,calls,run:code=>vm.runInContext(code,context)};
 }
 async function settle(){for(let i=0;i<20;i++)await Promise.resolve();}
@@ -92,8 +94,10 @@ await test('RC2 distinguishes login, room state and persistent CREATE result',as
  assert.match(c.nodes.get('#hostAuthStatus').textContent,/HOSTログイン済み/);
  assert.match(c.nodes.get('#roomStatus').textContent,/部屋作成済み/);
  assert.equal(c.nodes.get('#createBtn').disabled,true);
+ assert.equal(c.nodes.get('#createBtn').hidden,true);assert.equal(c.nodes.get('#changeEntryBtn').hidden,false);
  c.context.rpc=async()=>({...baseView(),room_exists:false,match:null});await c.run("act('VIEW')");
  assert.match(c.nodes.get('#roomStatus').textContent,/部屋未作成/);assert.equal(c.nodes.get('#createBtn').disabled,false);
+ assert.equal(c.nodes.get('#createBtn').hidden,false);assert.equal(c.nodes.get('#changeEntryBtn').hidden,true);
  c.context.rpc=async()=>({...baseView(),action_result:'CREATED'});await c.run("act('CREATE')");
  const message=c.nodes.get('#hostStatus').textContent;assert.match(message,/部屋を作成しました/);
  await c.run("act('VIEW')");assert.equal(c.nodes.get('#hostStatus').textContent,message);
@@ -106,5 +110,16 @@ await test('RC2 entry change is disabled while populated; READY failure is centr
  const c=client();c.run("client.join=async()=>{throw Error('入室コードを確認してください')}");
  await c.nodes.get('#joinBtn').onclick();assert.equal(c.nodes.get('#entryError').hidden,false);
  assert.equal(c.nodes.get('#entryError').textContent,'入室コードを確認してください');assert.equal(c.nodes.get('#joinBtn').disabled,false);
+});
+await test('RC3 polling never disables the entry input; short code is not sent',async()=>{
+ const c=client('host39.js');await settle();let done;c.context.rpc=()=>new Promise(r=>done=r);
+ const waiting=c.run("act('VIEW')");await settle();assert.equal(c.nodes.get('#newEntry').disabled,false);
+ done(baseView());await waiting;const before=c.calls.length;c.nodes.get('#newEntry').value='１１２６';
+ await c.run("act('CHANGE_ENTRY_CODE')");assert.equal(c.nodes.get('#newEntry').value,'1126');assert.equal(c.calls.length,before);assert.match(c.nodes.get('#hostStatus').textContent,/保存していません/);
+});
+await test('RC3 full-width entry normalization and IME composition preserve input',async()=>{
+ const c=client();assert.equal(c.run("normalizeEntryCode(' ＢＲ０３９ＴＥＳＴ２０２６　')"),'BR039TEST2026');
+ const input=c.nodes.get('#entryCode');input.value='ＢＲ';input.oninput({isComposing:true});assert.equal(input.value,'ＢＲ');input.oncompositionend();assert.equal(input.value,'BR');
+ let received;c.run('client.join=async(entry)=>{globalThis.receivedEntry=entry;throw Error("fixture")}');input.value=' ＢＲ０３９ＴＥＳＴ２０２６ ';await c.nodes.get('#joinBtn').onclick();assert.equal(c.context.receivedEntry,'BR039TEST2026');
 });
 writeFileSync(new URL('./clients39-results.json',import.meta.url),JSON.stringify({passed:results.length,results},null,2));

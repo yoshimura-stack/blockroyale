@@ -101,7 +101,7 @@
             <div class="overlay-card glass">
               <div class="eyebrow">PLAYER ENTRY</div>
               <h2>BLOCK ROYALE</h2>
-              <div class="small" id="roomLabel"></div><input id="entryCode" type="password" autocomplete="off" maxlength="160" placeholder="主催者からの入室コード"><input id="nameInput" maxlength="18" placeholder="名前を入力" value="">
+              <div class="small" id="roomLabel"></div><input id="entryCode" type="password" autocomplete="off" inputmode="text" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="160" placeholder="主催者からの入室コード"><label class="small"><input id="showPlayerEntry" type="checkbox">入室コードを表示</label><div class="small">全角英数字は半角に変換します。HOSTで保存済みのコードを入力してください。</div><input id="nameInput" maxlength="18" placeholder="名前を入力" value="">
               <p id="entryError" class="entry-error" role="alert" aria-live="assertive" hidden></p>
               <button id="joinBtn" class="btn primary">READY</button>
               <p class="small">HOSTが開始すると全員一斉にスタートします。<br>対戦中の再読み込みは失格となります。</p>

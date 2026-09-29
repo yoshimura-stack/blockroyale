@@ -2216,3 +2216,5 @@ body.visual-player::before{
 .action-message.is-error{color:#ffabbc}
 .admin-actions input[type=checkbox]{min-width:0;width:auto;margin-right:6px}
 body.visual-host{overflow:auto !important}
+
+#showPlayerEntry { width:auto; margin-right:6px; }

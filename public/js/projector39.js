@@ -1,9 +1,11 @@
+import {normalizeEntryCode,bindEntryCode} from './entry-code.js';
 import {CONFIG} from './config.js';
 import {rpc,roomCode,unpackPlayers,serverNow} from './free50.js';
 const $=s=>document.querySelector(s);
+bindEntryCode($('#observerEntry'));
 let view=null,entry='',running=false;
 $('#observerRoom').textContent=roomCode;
-$('#observerForm').onsubmit=e=>{e.preventDefault();entry=$('#observerEntry').value;if(!running){running=true;poll();}};
+$('#observerForm').onsubmit=e=>{e.preventDefault();entry=normalizeEntryCode($('#observerEntry').value);if(!running){running=true;poll();}};
 async function poll(){
  try{
   view=await rpc('br39_observe',{p_room:roomCode,p_entry:entry});

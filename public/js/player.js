@@ -1,9 +1,12 @@
+import {normalizeEntryCode,bindEntryCode} from './entry-code.js';
 import {CONFIG} from "./config.js";
 import {Tetris} from "./tetris.js";
 import {Renderer} from "./render.js";
 import {Free50Client,unpackPlayers,serverNow,roomCode} from "./free50.js";
 
 const $=s=>document.querySelector(s);
+bindEntryCode($('#entryCode'));
+$('#showPlayerEntry').onchange=()=>{$('#entryCode').type=$('#showPlayerEntry').checked?'text':'password';};
 const board=$("#board"), next=$("#nextCanvas");
 const renderer=new Renderer(board,next);
 const client=new Free50Client({capture:capturePacket,onView:applyView,onError:networkError});
@@ -477,7 +480,7 @@ $('#joinBtn').onclick=async()=>{
  $('#playerNameLabel').textContent=name;
  try{
    joined=true;
-   const view=await client.join($('#entryCode').value,name);
+   const view=await client.join(normalizeEntryCode($('#entryCode').value),name);
    name=unpackPlayers(view.players).find(p=>p.id===id)?.name||name;
    $('#playerNameLabel').textContent=name;
    $('#overlay').classList.add('hidden');
