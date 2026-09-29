@@ -1,0 +1,18 @@
+{
+  "room": "BR39-LOAD-1789621246077",
+  "count": 50,
+  "seconds": 60,
+  "target": "local-PGlite",
+  "note": "Synthetic RPC clients, not 50 real browser/game clients.",
+  "passed": true,
+  "cleanup": "Test room players cleared",
+  "requests": 3099,
+  "retries": 0,
+  "acceptedAttacks": 50,
+  "responseBytes": 5971365,
+  "elapsedSeconds": 65.326,
+  "requestsPerSecond": 47.43899825490617,
+  "p95Ms": 32.19380000000092,
+  "maxMs": 219.6221000000005,
+  "estimatedResponseGBPerHour": 0.32907133453755016
+}

@@ -1,0 +1,14 @@
+{
+  "passed": 9,
+  "results": [
+    "Host auth allowlist and private tables are enforced",
+    "Null/wrong secrets cannot bypass entry or session authentication",
+    "Exactly 50 participants, idempotent READY, no hashes exposed",
+    "VIEW does not reset; START creates 8s server countdown",
+    "Duplicate/lost-response retry delivers one attack; unauthorized acknowledgements ignored",
+    "50 queued K.O. reports leave exactly one server-selected winner; stale alive cannot resurrect",
+    "NEXT invalidates previous round packets; RESET is idempotent and invalidates capabilities",
+    "Disconnected player expires after 45 seconds; all disconnected means no winner",
+    "Legacy data remains unchanged"
+  ]
+}

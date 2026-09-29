@@ -1,0 +1,125 @@
+import vm from 'node:vm';
+import {readFileSync,writeFileSync} from 'node:fs';
+import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
+const base=new URL('../public/js/',import.meta.url);
+const clean=file=>readFileSync(new URL(file,base),'utf8').replace(/^import .*?;\r?\n/gm,'').replace(/^export /gm,'');
+const results=[];
+async function test(name,fn){await fn();results.push(name);console.log('PASS',name);}
+const match={id:'TEST',phase:'LOBBY',battle_no:1,reset_epoch:0,start_at:null,winner_id:null};
+const baseView=()=>({api_version:2,room_exists:true,host_authorized:true,match:{...match},players:[],boards:{},attacks:[],alive:2,me:{alive:true,last_seq:0}});
+function client(file='player.js'){
+ const nodes=new Map(),timers=[],calls=[];
+ const element=()=>({textContent:'',innerHTML:'',value:'',disabled:false,hidden:false,style:{},width:100,height:200,
+  classList:{add(){},remove(){},toggle(){},contains(){return false;}},append(){},replaceChildren(){},focus(){this.focused=true;},setSelectionRange(){},getContext(){return {fillRect(){}}}});
+ const querySelector=s=>{if(!nodes.has(s))nodes.set(s,element());return nodes.get(s);};
+ const context=vm.createContext({console,URL,Date,Map,Set,Math,Number,String,Promise,JSON,
+  document:{querySelector,createElement:element,addEventListener(){},visibilityState:'visible'},
+  CustomEvent:class{},window:{dispatchEvent(){},addEventListener(){},location:{href:'https://local.test/',replace(){}}},
+  sessionStorage:{getItem(){return null;},setItem(){},removeItem(){}},crypto:{randomUUID},
+  CONFIG:{SUPABASE_URL:'https://local.test',OPENING_ATTACK_LOCK_MS:15000,LEVEL_INTERVAL_MS:60000},
+  roomCode:'TEST',serverNow:()=>Date.now(),
+  unpackPlayers:rows=>(rows||[]).map(([id,player_name,ready,alive,score,rank])=>({id,name:player_name,player_name,ready,alive,score,rank})),
+  Free50Client:class{constructor(opts){Object.assign(this,opts);this.identity={id:'me'};}stop(){this.stopped=true;}attack(){}ack(){}},
+  createClient:()=>({auth:{getSession:async()=>({data:{session:{access_token:'local'}}}),signOut:async()=>{},signInWithPassword:async()=>({})}}),
+  rpc:async(method,params)=>{calls.push({method,params});return baseView();},
+  Tetris:class{constructor(){this.alive=true;this.started=false;this.score=0;this.level=1;this.maxCombo=0;this.maxAttack=0;this.queue=[];this.incoming=[];}
+    snapshot(){return '.'.repeat(200);}start(){this.started=true;}receiveAttack(n,id,turns){this.incoming.push({amount:n,attackId:id,turns});}},
+  Renderer:class{draw(){}},requestAnimationFrame(){},setTimeout(fn,ms){timers.push({fn,ms});return timers.length;},clearTimeout(){},confirm(){return true;}
+ });
+ vm.runInContext(clean('entry-code.js'),context);
+ querySelector('#newEntry').value='fixture-code-1234';
+ vm.runInContext(clean(file),context);return {context,nodes,timers,calls,run:code=>vm.runInContext(code,context)};
+}
+async function settle(){for(let i=0;i<20;i++)await Promise.resolve();}
+await test('HOST initial load/F5 only calls VIEW; destructive commands require explicit action',async()=>{
+ const c=client('host39.js');await settle();assert.equal(c.calls.length,1);assert.equal(c.calls[0].params.p_action,'VIEW');
+});
+await test('Missed countdown is recovered from server BATTLE state',async()=>{
+ const c=client();const v=baseView();v.match.phase='BATTLE';v.match.start_at=new Date(Date.now()-2000).toISOString();
+ c.context.v=v;c.run('joined=true;name="ME"');await c.run('applyView(v,false)');
+ assert.equal(c.run('game.started'),true);assert.equal(c.run('currentPhase'),'BATTLE');
+});
+await test('Refreshing an active PLAYER forfeits, never spawns a fresh board',async()=>{
+ const c=client();const v=baseView();v.match.phase='BATTLE';v.match.start_at=new Date(Date.now()-2000).toISOString();c.context.v=v;
+ c.run('joined=true');await c.run('applyView(v,true)');assert.equal(c.run('game.started'),false);assert.equal(c.run('capturePacket().state.alive'),false);
+});
+await test('Loser with higher score sees GAME OVER; only winner_id gets WINNER',async()=>{
+ for(const winner of ['other','me',null]){
+  const c=client();const v=baseView();v.match.phase='RESULT';v.match.winner_id=winner;
+  v.players=[['me','ME',true,winner==='me',1864,winner==='me'?1:2],['other','OTHER',true,winner==='other',1083,winner==='other'?1:2]];
+  c.context.v=v;c.run('joined=true');await c.run('applyView(v,false)');await settle();
+  assert.equal(c.nodes.get('#resultTitle').textContent,winner==='me'?'🏆 WINNER':'GAME OVER');
+  assert.equal(c.nodes.get('#resultScore').textContent,'SCORE 1,864');
+  if(winner===null)assert.match(c.nodes.get('#resultWinner').textContent,/優勝者なし/);
+ }
+});
+await test('Incoming attacks deduplicate; RESET stops client; NEXT clears board',async()=>{
+ const c=client();c.run('joined=true;currentPhase="BATTLE";sessionEpoch=0;seenBattleNo=1;');
+ c.context.a={id:'a',attacker_id:'other',target_id:'me',status:'PENDING',reset_epoch:0,battle_no:1,amount:2,turns_remaining:2};
+ c.run('processIncomingAttackRow(a);processIncomingAttackRow(a)');assert.equal(c.run('game.incoming.length'),1);
+ let v=baseView();v.match.battle_no=2;c.context.v=v;c.run('game.score=100');await c.run('applyView(v,false)');assert.equal(c.run('game.score'),0);
+ v.match.reset_epoch=1;await c.run('applyView(v,false)');assert.equal(c.run('client.stopped'),true);assert.equal(c.run('joined'),false);
+});
+await test('Garbage landing remains compact and translucent (v0.38 CSS preserved)',async()=>{
+ const c=client();c.run('showCombatAlert("landing","Rival",3,0)');assert.equal(c.nodes.get('#combatAlertMain').textContent,'邪魔ブロック 3列 投下！');
+ assert.equal(c.timers.at(-1).ms,950);
+ const css=readFileSync(new URL('../css/app.css',base),'utf8');assert(css.includes('.combat-alert.garbage-landing'));assert(!clean('player.js').includes('classList.add("landing")'));
+});
+await test('Transport retries identical sequence/attack IDs and preserves newer ACK changes',async()=>{
+ const timers=[];const ctx=vm.createContext({console,Date,Math,Map,Set,JSON,Promise,crypto:{randomUUID},CONFIG:{SUPABASE_URL:'local',ROOM_CODE:'T'},
+  setTimeout(fn,ms){timers.push({fn,ms});return 1;},clearTimeout(){},sessionStorage:{getItem(){return null;},setItem(){},removeItem(){}}});
+ vm.runInContext(clean('free50.js'),ctx);
+ const calls=[];let fail=true;ctx.call=async(method,args)=>{calls.push(structuredClone(args));if(fail){fail=false;throw Error('response lost');}return {...baseView(),seq:args.p_data.seq};};
+ vm.runInContext(`var t=new Free50Client({capture:()=>({state:{alive:true}}),onView:async()=>{},onError:()=>{},call});t.match=${JSON.stringify(match)};t.running=true;t.attack(3);t.ack('incoming',2,1);`,ctx);
+ await vm.runInContext('t.pump()',ctx);vm.runInContext("t.ack('incoming',0,0,'LANDED')",ctx);await vm.runInContext('t.pump()',ctx);
+ assert.deepEqual(calls[0],calls[1]);assert.equal(vm.runInContext('t.outgoing.length',ctx),0);assert.equal(vm.runInContext("t.acks.get('incoming').status",ctx),'LANDED');
+ assert(timers.every(t=>t.ms>=950));
+});
+await test('Transport refuses concurrent pump; no game callback causes database fanout',async()=>{
+ const source=clean('player.js');assert(!source.includes('supabase.from'));assert(!source.includes('.channel('));assert(!source.includes('setInterval('));
+ const ctx=vm.createContext({console,Date,Math,Map,Set,JSON,Promise,crypto:{randomUUID},CONFIG:{SUPABASE_URL:'local',ROOM_CODE:'T'},setTimeout(){},clearTimeout(){},sessionStorage:{getItem(){return null;},setItem(){}}});
+ vm.runInContext(clean('free50.js'),ctx);let resolve,calls=0;ctx.call=()=>{calls++;return new Promise(r=>{resolve=r;});};
+ vm.runInContext(`var t=new Free50Client({capture:()=>({}),onView:async()=>{},onError:()=>{},call});t.match=${JSON.stringify(match)};t.running=true;`,ctx);
+ const pending=vm.runInContext('t.pump()',ctx);await vm.runInContext('t.pump()',ctx);assert.equal(calls,1);resolve(baseView());await pending;
+});
+await test('Hidden-tab heartbeat advances gravity; NEXT resets visible statistics',async()=>{
+ const c=client();c.run('game.started=true;game.tick=()=>{game.score+=1;};matchStartAt=Date.now();capturePacket();');
+ assert.equal(c.run('game.score'),1);
+ c.nodes.get('#score').textContent='500';c.run('prepareNextBattle({battle_no:2})');
+ assert.equal(c.nodes.get('#score').textContent,'0');assert.equal(c.nodes.get('#level').textContent,'1');
+});
+await test('RC2 distinguishes login, room state and persistent CREATE result',async()=>{
+ const c=client('host39.js');await settle();
+ assert.match(c.nodes.get('#hostAuthStatus').textContent,/HOSTログイン済み/);
+ assert.match(c.nodes.get('#roomStatus').textContent,/部屋作成済み/);
+ assert.equal(c.nodes.get('#createBtn').disabled,true);
+ assert.equal(c.nodes.get('#createBtn').hidden,true);assert.equal(c.nodes.get('#changeEntryBtn').hidden,false);
+ c.context.rpc=async()=>({...baseView(),room_exists:false,match:null});await c.run("act('VIEW')");
+ assert.match(c.nodes.get('#roomStatus').textContent,/部屋未作成/);assert.equal(c.nodes.get('#createBtn').disabled,false);
+ assert.equal(c.nodes.get('#createBtn').hidden,false);assert.equal(c.nodes.get('#changeEntryBtn').hidden,true);
+ c.context.rpc=async()=>({...baseView(),action_result:'CREATED'});await c.run("act('CREATE')");
+ const message=c.nodes.get('#hostStatus').textContent;assert.match(message,/部屋を作成しました/);
+ await c.run("act('VIEW')");assert.equal(c.nodes.get('#hostStatus').textContent,message);
+ c.context.rpc=async()=>{throw Error('この部屋は既に存在します');};await c.run("act('CREATE')");
+ c.context.rpc=async()=>baseView();await c.run("act('VIEW')");assert.match(c.nodes.get('#hostStatus').textContent,/既に存在/);
+});
+await test('RC2 entry change is disabled while populated; READY failure is central and retryable',async()=>{
+ const h=client('host39.js');await settle();h.context.rpc=async()=>({...baseView(),players:[['a','A',true,true,0,null]]});
+ await h.run("act('VIEW')");assert.equal(h.nodes.get('#changeEntryBtn').disabled,true);
+ const c=client();c.run("client.join=async()=>{throw Error('入室コードを確認してください')}");
+ await c.nodes.get('#joinBtn').onclick();assert.equal(c.nodes.get('#entryError').hidden,false);
+ assert.equal(c.nodes.get('#entryError').textContent,'入室コードを確認してください');assert.equal(c.nodes.get('#joinBtn').disabled,false);
+});
+await test('RC3 polling never disables the entry input; short code is not sent',async()=>{
+ const c=client('host39.js');await settle();let done;c.context.rpc=()=>new Promise(r=>done=r);
+ const waiting=c.run("act('VIEW')");await settle();assert.equal(c.nodes.get('#newEntry').disabled,false);
+ done(baseView());await waiting;const before=c.calls.length;c.nodes.get('#newEntry').value='１１２６';
+ await c.run("act('CHANGE_ENTRY_CODE')");assert.equal(c.nodes.get('#newEntry').value,'1126');assert.equal(c.calls.length,before);assert.match(c.nodes.get('#hostStatus').textContent,/保存していません/);
+});
+await test('RC3 full-width entry normalization and IME composition preserve input',async()=>{
+ const c=client();assert.equal(c.run("normalizeEntryCode(' ＢＲ０３９ＴＥＳＴ２０２６　')"),'BR039TEST2026');
+ const input=c.nodes.get('#entryCode');input.value='ＢＲ';input.oninput({isComposing:true});assert.equal(input.value,'ＢＲ');input.oncompositionend();assert.equal(input.value,'BR');
+ let received;c.run('client.join=async(entry)=>{globalThis.receivedEntry=entry;throw Error("fixture")}');input.value=' ＢＲ０３９ＴＥＳＴ２０２６ ';await c.nodes.get('#joinBtn').onclick();assert.equal(c.context.receivedEntry,'BR039TEST2026');
+});
+writeFileSync(new URL('./clients39-results.json',import.meta.url),JSON.stringify({passed:results.length,results},null,2));
